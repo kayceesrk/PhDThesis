@@ -98,5 +98,37 @@
   % and \majorprof.
   % Reference: PU 17.
 \begin{abstract}
-This is a test.
+
+In recent years, there has been a wide-spread adoption of both multicore and
+cloud computing. Traditionally, concurrent programmers have relied on the
+compute systems providing \emph{strong memory consistency}, where there is a
+semblance of concurrent tasks operating over a shared global address space,
+with reads to a memory location witnessing the latest write to the same
+location. However, providing scalable strong consistency guarantees as the
+scale of the system grows is an increasingly difficult endeavour. In a
+multicore setting, the increasing complexity and the lack of scalability of
+hardware abstractions such as on-chip cache coherence deters scalable strong
+consistency. In geo-distributed compute clouds, the latency and availability
+concerns in the presence of partial failures prohibit strong consistency.
+Hence, modern multicore and cloud computing platforms eschew strong consistency
+in favor of weakly consistent memory. As a result there is a growing proportion
+of developers who must tackle the full complexity of concurrent programming for
+an asynchronous distributed systems.
+
+This dissertation argues that functional programming language abstractions can
+mitigate the complexity of programming weakly consistent systems. It presents
+three major contributions, each focussed on addressing a particular challenge
+associated with weakly consistent loosely coupled systems: (1) the absence of
+cache coherence, (2) asynchrony and (3) eventual consistency. First, it
+describes \MM, a parallel extension of MLton standard ML compiler and runtime,
+and shows how to provide an efficient cache coherent global address space on
+top of the \emph{non-cache-coherent} Intel Single-chip Cloud Computer (SCC).
+Next, it describes \rxcml, a distributed extension of \MM and shows that, with
+the help of speculative execution, synchronous communication can be utilized as
+an efficient abstraction for programming asynchronous distributed systems.
+Finally, it presents the \quelea, a programming system for \emph{eventually
+consistent} distributed stores, and shows that the choice of correct
+consistency level for replicated data type operations and transactions can be
+automated with the help of high-level declarative \emph{contracts}.
+
 \end{abstract}
