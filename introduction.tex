@@ -131,14 +131,50 @@ that the application meets is correctness requirements.
 
 On non cache coherent multicore architectures, the programmer must explicitly
 perform communication actions between local address spaces through message
-passing or direct memory access (DMA). On architectures such as Intel SCC and
-Runnemede, which provide explicit instructions to invalidate and flush caches,
-the programmer must ensure that the cache control instructions are correctly
-issued at appropriate junctures in order to maintain a coherent view of the
-shared memory. Understandably, this process is notoriously difficult to get
-right.
+passing or direct memory access (DMA). On architectures such as Intel
+SCC~\cite{Mattson2010} and Runnemede~\cite{Carter2013}, which provide explicit
+instructions to invalidate and flush caches, the programmer must ensure that
+the cache control instructions are correctly issued at appropriate junctures in
+order to maintain a coherent view of the shared memory. Understandably, this
+process is notoriously difficult to get right.
 
--- This thesis.
+A geo-distributed store, where an object is replicated at multiple sites, is in
+essense similar to a non cache coherent architecture. Under weak consistency,
+programs operating over geo-distributed stores typically assume that the
+replicas of an object will \emph{eventually converge} to the same state. This
+behavior is commonly termed as eventual consistency~\cite{19,147,Conway}.
+Unlike multicore architectures, the high latency in a geo-distributed setting
+warrants that the application accept concurrent conflicting updates in order to
+remain responsive. The updates are asynchronously propogated between the sites,
+and a \emph{deterministic} conflict resolution procedure ensures that the
+replicas eventually converge to the same state. The conflict resolution can
+either be automatic (such as last-writer-wins~\cite{LWW}) or, in cases where
+the automatic resolution is non-trivial or non-existent, may involve manual
+intervention.
+
+It is important to point out that eventual consistency only guarantees that the
+replicas will "eventually" converge to a same state, but does not provide any
+additional guarantees with respect to recency or causality of the operations.
+Hence, with two successive reads to the same object, there is no guarantee that
+the second read will see a "newer" version of the object. Worse still, a
+session might not see its own writes! These anamolies are reminiscent of the
+reorderings that can occur under language and hardware memory
+models~\cite{Demange2013,Sewell2010}, except that the anamolies in this case
+are due to the fact that requests from same session can be serviced by
+different replicas.
+
+To address these concerns, several systems~\cite{COPS, Eiger, Walter,
+CausalConsistency, RedBlue, HAT} have proposed that provide a lattice of
+stronger guarantees on demand. While defining new consistency guarantees and
+implementing them in a geo-distributed storage infrastructure is certainly a
+commendable endeavour, how does one match the consistency requirements at the
+application level with the consistency guarantees offered by the store? How
+does one ensure that the composition of consistency guarantees of different
+operations result in a sensible behavior? In short, developing correct
+concurrent applications under weak consistency requires large programmer effort
+in order to intricately reasoning about non-trivial memoty interactions on top
+an already non-deterministic programming model.
+
 
 %% * One way - strong consistency; simple abstraction, but complicated underneath.
 %%	 + Discuss the implication of shared memory multicore processors and distributed systems
