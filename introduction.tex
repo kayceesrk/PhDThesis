@@ -1,45 +1,149 @@
-%
-%  revised  introduction.tex  2011-09-02  Mark Senn  http://engineering.purdue.edu/~mark
-%  created  introduction.tex  2002-06-03  Mark Senn  http://engineering.purdue.edu/~mark
-%
-%  This is the introduction chapter for a simple, example thesis.
-%
-
-
 \chapter{Introduction}
 
-This is the introduction.
-The first paragraph after a heading is not indented.
+In recent years, there has been a widespread adoption of both multicore and
+cloud computing. Multicore processors have become the norm in mobile, desktop
+and enterprise computing, with an increasing number of cores being fitted on a
+chip with every successive generation. Cloud computing has paved the way for
+companies to rent farms of such multicore processors on a pay-per-use basis,
+with the ability to dynamically scale on demand. Indeed, many real-world
+services for communication, governance, commerce, education, entertainment,
+etc., are routinely exposed as a web-service that runs in third-party cloud
+compute platforms such as Windows Azure~\cite{Azure} and Amazon’s
+EC2~\cite{Ec2}. These services tend to be concurrently accessed by millions of
+users, increasingly through multicore-capable mobile and desktop devices.
 
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
+\noindent \textbf{Strong consistency.} The holy grail of programming such
+massively parallel systems is to achieve good scalability without falling prey
+to the usual pitfalls of concurrency such as data races, deadlocks and
+atomicity violations~\cite{Lu2008}. Traditionally, programmers have relied on
+the underlying hardware or storage infrastructure providing a semblance of a
+single memory image, shared between all of the concurrent tasks. Operations
+from each task appear to be applied to the shared memory in the order in which
+they appear locally in each task, and operations from different tasks are
+interleaved in some total order. Such a system is said to provide \emph{strong
+memory consistency}. Strong consistency is a natural extension of uniprocessor
+memory model to a multiprocessor setting. While this strong consistency does
+not completely eliminate the possibility of concurrency bugs, it certainly
+simplifies reasoning about the behavior concurrent programs.
 
+\noindent \textbf{Implications of programming model.} Our definition of strong
+consistency applies equally to the two popular paradigms of concurrent program
+design, \emph{shared memory} and \emph{message-passing}, differentiated by the
+way in which the concurrent threads interact with each other. In the shared
+memory paradigm, threads interact by updating and inspecting shared memory
+locations, whereas under the message-passing paradigm, threads interact by
+exchanging messages. For this discussion, let us assume that the shared memory
+paradigm is realized through read and write primitive to named memory
+locations, and message-passing paradigm is captured by asynchronous send and
+blocking receive primitives on named point-to-point channels. Other
+message-passing paradigms such as synchronous communication, Erlang-style
+mailboxes, thread-addressed messages can be implemented on top of
+point-to-point asynchronous message passing model.
 
-\section{Section Heading}
+Under strongly consistent shared memory, a thread performing a read will
+witness the latest write to the same memory location by any thread. Under
+strongly consistent message-passing, when a thread performs a sends a value $v$
+on an empty channel $c$, the sent value $v$ is available to be consumed by
+every thread that subsequently performs a receive. Subsequently, when a receive
+operation consumes the sent value $v$, the act of consumption is witnessed by
+every thread, and no subsequent thread can consume the same value $v$. Indeed,
+semantically shared-memory and message-passing paradigms are simply two sides
+of the same coin~\cite{Turon2013,Lauer1979}. This is illustrated by the fact
+that one model can easily be implemented using the other. For example,
+languages like Haskell~\cite{Haskell}, ConcurrentML~\cite{CML} and
+Maticore~\cite{Manticore} implement message-passing paradigms over shared
+memory, and popular geo-distributed stores such as Dynamo~\cite{Dynamo},
+Cassandra~\cite{Cassandra} and Riak~\cite{Riak} implement shared-memory
+paradigm over message passing. Hence, strong memory consistency equally
+benefits programmers working under either paradigms. Conversely, and more
+importantly, any weaker memory consistency semantics affects both paradigms.
 
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
+\noindent \textbf{Realizing strong consistency.} Depending upon the target
+platform, a variety of mechanisms have been proposed to achieve strong
+consistency. Shared memory multicore processors designed for mainstream
+computing markets tend to have hierarchical memory organization, with private
+and shared multi-level caches, and utilize a hardware protocol for keeping the
+caches coherent~\cite{Martin2012}. Coherence can be viewed as a mechanism that
+transmits a write to a memory location to all the cache copies of the same
+location. Typically, each cache line has meta-data attached to it which
+indicate whether the local cacheline is invalid, shared or modified. When a
+memory location corresponding to a shared cache line is updated, coherence
+mechanism invalidates all other remote cache lines that also refer to the same
+memory location. A core accessing an invalid cacheline has to fetch the latest
+version, which is termed as cache miss.
 
+In a distributed setting, techniques such as atomic broadcast~\cite{},
+consensus~\cite{}, distributed transactions~\cite{}, and distributed locking
+services~\cite{} are widely used in practice to provide strong consistency.
+These mechanisms abstract the underlying complexity of concurrent programming,
+and expose a simpler programming model to the developers. For example, models
+such as sequential consistency~\cite{Lam79}, linearizability~\cite{} and
+serializability~\cite{} are widely used in the construction of concurrent
+programs.
 
-\subsection{Subsection heading}
+\noindent \textbf{Cost of strong consistency.} Despite the simplicity of strong
+consistency, with increasing scale, providing strong consistency guarantees is
+an increasingly difficult endeavour. Already, for performance reasons, modern
+optimizing compilers and multicore processors reorder code in ways that are not
+observable by sequential code, but are very much observable under concurrent
+execution~\cite{Demange2013,Sewell2010,Sarkar2011,Batty2011}. Hence, the
+semblance of strong consistency is broken. However, the harware memory models
+do provide coherence, and the language memory models ensure sequential
+consistency for programs that do not involve data races.
 
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
+On the other hand, the complexity and power requirements for hardware support
+for cache coherence increases with increasing number of
+cores~\cite{Kavadis2010}. The scalability of hardware cache coherence
+mechanisms is mainly hindered by the scalability of coherence hardware, the
+storage requirements for cache metadata, and the effort to implement and verify
+complex coherence protocols. While there are indeed attempts to reduce the cost
+of cache coherence hardware on manycore systems~\cite{Martin2012}, hardware
+vendors increasingly opt for non cache coherent architectures. Graphics
+processing units (GPUs)~\cite{Luebke2004}, the Intel Single-chip Cloud Computer
+(SCC)~\cite{Mattson2010}, the Cell BE processor~\cite{Kahle2005}, and the
+Runnemede prototype~\cite{Carter2013} are representative examples of non cache
+coherent architectures.
 
+Applications that rely upon strong consistency is a distributed setting have to
+pay the cost of reduced \emph{availability} in the presence of network
+partitions and high \emph{latency}. In particular, Brewer's well-known CAP
+theorem~\cite{Brewer2000,Gilbert2002} states that a distributed system cannot
+simultaneously provide strong consistency, be available to updates, and
+tolerate network partitions. Since network partitions are unavoidable, and
+web-services running on geo-distributed systems focus on providing always-on
+experience, application developers unfortunately have to give up the advantages
+offered by strong consistency. Moreover, techniques for achieving strong
+consistency~\cite{}, require \emph{coordination} between the nodes in the
+distributed system. In a geo-distributed setting, where inter-node latencies
+are in the order of hundreds of milliseconds, the latency hit associated with
+strong consistency is unacceptable. Moreover, coordination between nodes in a
+geo-distributed setting while processing client requests defeats the whole
+purpose of geo-distribution, which is to minimize latency by serving clients
+from the closest data center.
 
-\subsubsection{Subsubsection heading}
+\noindent \textbf{Challenges of weak consistency.} In response to these
+concerns, scalable compute platforms eschew strong consistency, and instead
+rely only on weaker consistency guarantees. Without strong consistency, the
+programmer gets to see that there is no longer a coherent shared memory
+abstraction, but instead a collection of \emph{coherence domains} between which
+updates are lazily exchanged. The onus now falls on the programmer to ensure
+that the application meets is correctness requirements.
 
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
-This is a sentence.
+On non cache coherent multicore architectures, the programmer must explicitly
+perform communication actions between local address spaces through message
+passing or direct memory access (DMA). On architectures such as Intel SCC and
+Runnemede, which provide explicit instructions to invalidate and flush caches,
+the programmer must ensure that the cache control instructions are correctly
+issued at appropriate junctures in order to maintain a coherent view of the
+shared memory. Understandably, this process is notoriously difficult to get
+right.
+
+-- This thesis.
+
+%% * One way - strong consistency; simple abstraction, but complicated underneath.
+%%	 + Discuss the implication of shared memory multicore processors and distributed systems
+%% * Modern multicore and distributed systems eschew strong consistency in
+%%	 favor of weak memory consistency.
+%%	 + Implications - (1) absence of coherence (2) asynchrony and (3) eventual consistency
+%% * Dealing with this is not easy; provide evidence (TODO: references)
+
