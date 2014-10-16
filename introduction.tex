@@ -8,37 +8,41 @@ companies to rent farms of such multicore processors on a pay-per-use basis,
 with the ability to dynamically scale on demand. Indeed, many real-world
 services for communication, governance, commerce, education, entertainment,
 etc., are routinely exposed as a web-service that runs in third-party cloud
-compute platforms such as Windows Azure~\cite{Azure} and Amazon’s
-EC2~\cite{Ec2}. These services tend to be concurrently accessed by millions of
+compute platforms such as Windows Azure~\cite{Calder2011} and Amazon’s
+EC2~\cite{EC2}. These services tend to be concurrently accessed by millions of
 users, increasingly through multicore-capable mobile and desktop devices.
 
-\noindent \textbf{Strong consistency.} The holy grail of programming such
-massively parallel systems is to achieve good scalability without falling prey
-to the usual pitfalls of concurrency such as data races, deadlocks and
-atomicity violations~\cite{Lu2008}. Traditionally, programmers have relied on
-the underlying hardware or storage infrastructure providing a semblance of a
-single memory image, shared between all of the concurrent tasks. Operations
-from each task appear to be applied to the shared memory in the order in which
-they appear locally in each task, and operations from different tasks are
-interleaved in some total order. Such a system is said to provide \emph{strong
-memory consistency}. Strong consistency is a natural extension of uniprocessor
-memory model to a multiprocessor setting. While this strong consistency does
-not completely eliminate the possibility of concurrency bugs, it certainly
-simplifies reasoning about the behavior concurrent programs.
+\section{The problem}
 
-\noindent \textbf{Implications of programming model.} Our definition of strong
-consistency applies equally to the two popular paradigms of concurrent program
-design, \emph{shared memory} and \emph{message-passing}, differentiated by the
-way in which the concurrent threads interact with each other. In the shared
-memory paradigm, threads interact by updating and inspecting shared memory
-locations, whereas under the message-passing paradigm, threads interact by
-exchanging messages. For this discussion, let us assume that the shared memory
-paradigm is realized through read and write primitive to named memory
-locations, and message-passing paradigm is captured by asynchronous send and
-blocking receive primitives on named point-to-point channels. Other
-message-passing paradigms such as synchronous communication, Erlang-style
-mailboxes, thread-addressed messages can be implemented on top of
-point-to-point asynchronous message passing model.
+\subsection{Strong consistency}
+
+The holy grail of programming such massively parallel systems is to achieve
+good scalability without falling prey to the usual pitfalls of concurrency such
+as data races, deadlocks and atomicity violations~\cite{Lu2008}. Traditionally,
+programmers have relied on the underlying hardware or storage infrastructure
+providing a semblance of a single memory image, shared between all of the
+concurrent tasks. Operations from each task appear to be applied to the shared
+memory in the order in which they appear locally in each task, and operations
+from different tasks are interleaved in some total order. Such a system is said
+to provide \emph{strong memory consistency}. Strong consistency is a natural
+extension of uniprocessor memory model to a multiprocessor setting. While this
+strong consistency does not completely eliminate the possibility of concurrency
+bugs, it certainly simplifies reasoning about the behavior concurrent programs.
+
+\subsection{Implications of the programming model}
+
+Our definition of strong consistency applies equally to the two popular
+paradigms of concurrent program design, \emph{shared memory} and
+\emph{message-passing}, differentiated by the way in which the concurrent
+threads interact with each other. In the shared memory paradigm, threads
+interact by updating and inspecting shared memory locations, whereas under the
+message-passing paradigm, threads interact by exchanging messages. For this
+discussion, let us assume that the shared memory paradigm is realized through
+read and write primitive to named memory locations, and message-passing
+paradigm is captured by asynchronous send and blocking receive primitives on
+named point-to-point channels. Other message-passing paradigms such as
+synchronous communication, Erlang-style mailboxes, thread-addressed messages
+can be implemented on top of point-to-point asynchronous message passing model.
 
 Under strongly consistent shared memory, a thread performing a read will
 witness the latest write to the same memory location by any thread. Under
@@ -50,42 +54,46 @@ every thread, and no subsequent thread can consume the same value $v$. Indeed,
 semantically shared-memory and message-passing paradigms are simply two sides
 of the same coin~\cite{Turon2013,Lauer1979}. This is illustrated by the fact
 that one model can easily be implemented using the other. For example,
-languages like Haskell~\cite{Haskell}, ConcurrentML~\cite{CML} and
-Maticore~\cite{Manticore} implement message-passing paradigms over shared
-memory, and popular geo-distributed stores such as Dynamo~\cite{Dynamo},
-Cassandra~\cite{Cassandra} and Riak~\cite{Riak} implement shared-memory
+languages like Haskell~\cite{haskellsm}, ConcurrentML~\cite{Reppy99} and
+Maticore~\cite{Fluet2007} implement message-passing paradigms over shared
+memory, and popular geo-distributed stores such as Dynamo~\cite{DeCandia2007},
+Cassandra~\cite{Lakshman2010} and Riak~\cite{Riak} implement shared-memory
 paradigm over message passing. Hence, strong memory consistency equally
 benefits programmers working under either paradigms. Conversely, and more
 importantly, any weaker memory consistency semantics affects both paradigms.
 
-\noindent \textbf{Realizing strong consistency.} Depending upon the target
-platform, a variety of mechanisms have been proposed to achieve strong
-consistency. Shared memory multicore processors designed for mainstream
-computing markets tend to have hierarchical memory organization, with private
-and shared multi-level caches, and utilize a hardware protocol for keeping the
-caches coherent~\cite{Martin2012}. Coherence can be viewed as a mechanism that
-transmits a write to a memory location to all the cache copies of the same
-location. Typically, each cache line has meta-data attached to it which
-indicate whether the local cacheline is invalid, shared or modified. When a
-memory location corresponding to a shared cache line is updated, coherence
+\subsection{Realizing strong consistency}
+
+Depending upon the target platform, a variety of mechanisms have been proposed
+to achieve strong consistency. Shared memory multicore processors designed for
+mainstream computing markets tend to have hierarchical memory organization,
+with private and shared multi-level caches, and utilize a hardware protocol for
+keeping the caches coherent~\cite{Martin2012}. Coherence can be viewed as a
+mechanism that transmits a write to a memory location to all the cache copies
+of the same location. Typically, each cache line has meta-data attached to it
+which indicate whether the local cacheline is invalid, shared or modified. When
+a memory location corresponding to a shared cache line is updated, coherence
 mechanism invalidates all other remote cache lines that also refer to the same
 memory location. A core accessing an invalid cacheline has to fetch the latest
 version, which is termed as cache miss.
 
-In a distributed setting, techniques such as atomic broadcast~\cite{},
-consensus~\cite{}, distributed transactions~\cite{}, and distributed locking
-services~\cite{} are widely used in practice to provide strong consistency.
-These mechanisms abstract the underlying complexity of concurrent programming,
-and expose a simpler programming model to the developers. For example, models
-such as sequential consistency~\cite{Lam79}, linearizability~\cite{} and
-serializability~\cite{} are widely used in the construction of concurrent
-programs.
+In a distributed setting, techniques such as atomic
+broadcast~\cite{Defago2004}, consensus~\cite{Lamport98}, distributed
+transactions~\cite{Traiger1982}, and distributed locking
+services~\cite{Burrows2006} are widely used in practice to provide strong
+consistency. These mechanisms abstract the underlying complexity of concurrent
+programming, and expose a simpler programming model to the developers. For
+example, models such as sequential consistency~\cite{Lam79},
+linearizability~\cite{Herlihy1990} and serializability~\cite{Serializability}
+are widely used in the construction of concurrent programs.
 
-\noindent \textbf{Cost of strong consistency.} Despite the simplicity of strong
-consistency, with increasing scale, providing strong consistency guarantees is
-an increasingly difficult endeavour. Already, for performance reasons, modern
-optimizing compilers and multicore processors reorder code in ways that are not
-observable by sequential code, but are very much observable under concurrent
+\subsection{Cost of strong consistency}
+
+Despite the simplicity of strong consistency, with increasing scale, providing
+strong consistency guarantees is an increasingly difficult endeavour. Already,
+for performance reasons, modern optimizing compilers and multicore processors
+reorder code in ways that are not observable by sequential code, but are very
+much observable under concurrent
 execution~\cite{Demange2013,Sewell2010,Sarkar2011,Batty2011}. Hence, the
 semblance of strong consistency is broken. However, the harware memory models
 do provide coherence, and the language memory models ensure sequential
@@ -93,7 +101,7 @@ consistency for programs that do not involve data races.
 
 On the other hand, the complexity and power requirements for hardware support
 for cache coherence increases with increasing number of
-cores~\cite{Kavadis2010}. The scalability of hardware cache coherence
+cores~\cite{Kavadias2010}. The scalability of hardware cache coherence
 mechanisms is mainly hindered by the scalability of coherence hardware, the
 storage requirements for cache metadata, and the effort to implement and verify
 complex coherence protocols. While there are indeed attempts to reduce the cost
@@ -107,27 +115,29 @@ coherent architectures.
 Applications that rely upon strong consistency is a distributed setting have to
 pay the cost of reduced \emph{availability} in the presence of network
 partitions and high \emph{latency}. In particular, Brewer's well-known CAP
-theorem~\cite{Brewer2000,Gilbert2002} states that a distributed system cannot
-simultaneously provide strong consistency, be available to updates, and
-tolerate network partitions. Since network partitions are unavoidable, and
-web-services running on geo-distributed systems focus on providing always-on
-experience, application developers unfortunately have to give up the advantages
-offered by strong consistency. Moreover, techniques for achieving strong
-consistency~\cite{}, require \emph{coordination} between the nodes in the
-distributed system. In a geo-distributed setting, where inter-node latencies
-are in the order of hundreds of milliseconds, the latency hit associated with
-strong consistency is unacceptable. Moreover, coordination between nodes in a
+theorem~\cite{Brewer2000,Brewer2012,Gilbert2002} states that a distributed
+system cannot simultaneously provide strong consistency, be available to
+updates, and tolerate network partitions. Since network partitions are
+unavoidable, and web-services running on geo-distributed systems focus on
+providing always-on experience, application developers unfortunately have to
+give up the advantages offered by strong consistency. Moreover, techniques for
+achieving strong consistency~\cite{Burrows2006, Traiger1982, Lamport98,
+Defago2004}, require \emph{coordination} between the nodes in the distributed
+system. In a geo-distributed setting, where inter-node latencies are in the
+order of hundreds of milliseconds, the latency hit associated with strong
+consistency is unacceptable. Moreover, coordination between nodes in a
 geo-distributed setting while processing client requests defeats the whole
 purpose of geo-distribution, which is to minimize latency by serving clients
 from the closest data center.
 
-\noindent \textbf{Challenges of weak consistency.} In response to these
-concerns, scalable compute platforms eschew strong consistency, and instead
-rely only on weaker consistency guarantees. Without strong consistency, the
-programmer gets to see that there is no longer a coherent shared memory
-abstraction, but instead a collection of \emph{coherence domains} between which
-updates are lazily exchanged. The onus now falls on the programmer to ensure
-that the application meets is correctness requirements.
+\subsection{Challenges of weak consistency}
+
+In response to these concerns, scalable compute platforms eschew strong
+consistency, and instead rely only on weaker consistency guarantees. Without
+strong consistency, the programmer gets to see that there is no longer a
+coherent shared memory abstraction, but instead a collection of \emph{coherence
+domains} between which updates are lazily exchanged. The onus now falls on the
+programmer to ensure that the application meets is correctness requirements.
 
 On non cache coherent multicore architectures, the programmer must explicitly
 perform communication actions between local address spaces through message
@@ -135,22 +145,25 @@ passing or direct memory access (DMA). On architectures such as Intel
 SCC~\cite{Mattson2010} and Runnemede~\cite{Carter2013}, which provide explicit
 instructions to invalidate and flush caches, the programmer must ensure that
 the cache control instructions are correctly issued at appropriate junctures in
-order to maintain a coherent view of the shared memory. Understandably, this
-process is notoriously difficult to get right.
+order to maintain a coherent view of the shared memory. Any missed cache
+invalidations will lead to stale data being read, where as any missed cache
+flushes prevents a write from being exposed to other coherence domains.
+However, frequent invalidations and flushes lead to poor cache behavior.
+Understandably, this process is notoriously difficult to get right.
 
 A geo-distributed store, where an object is replicated at multiple sites, is in
 essense similar to a non cache coherent architecture. Under weak consistency,
 programs operating over geo-distributed stores typically assume that the
 replicas of an object will \emph{eventually converge} to the same state. This
-behavior is commonly termed as eventual consistency~\cite{19,147,Conway}.
-Unlike multicore architectures, the high latency in a geo-distributed setting
-warrants that the application accept concurrent conflicting updates in order to
-remain responsive. The updates are asynchronously propogated between the sites,
-and a \emph{deterministic} conflict resolution procedure ensures that the
-replicas eventually converge to the same state. The conflict resolution can
-either be automatic (such as last-writer-wins~\cite{LWW}) or, in cases where
-the automatic resolution is non-trivial or non-existent, may involve manual
-intervention.
+behavior is commonly termed as eventual
+consistency~\cite{Terry1995,Bailis2013}. Unlike multicore architectures, the
+high latency in a geo-distributed setting warrants that the application accept
+concurrent conflicting updates in order to remain responsive. The updates are
+asynchronously propogated between the sites, and a \emph{deterministic}
+conflict resolution procedure ensures that the replicas eventually converge to
+the same state. The conflict resolution can either be automatic (such as
+last-writer-wins) or, in cases where the automatic resolution is non-trivial or
+non-existent, may involve manual intervention.
 
 It is important to point out that eventual consistency only guarantees that the
 replicas will "eventually" converge to a same state, but does not provide any
@@ -163,23 +176,194 @@ models~\cite{Demange2013,Sewell2010}, except that the anamolies in this case
 are due to the fact that requests from same session can be serviced by
 different replicas.
 
-To address these concerns, several systems~\cite{COPS, Eiger, Walter,
-CausalConsistency, RedBlue, HAT} have proposed that provide a lattice of
-stronger guarantees on demand. While defining new consistency guarantees and
-implementing them in a geo-distributed storage infrastructure is certainly a
-commendable endeavour, how does one match the consistency requirements at the
-application level with the consistency guarantees offered by the store? How
-does one ensure that the composition of consistency guarantees of different
-operations result in a sensible behavior? In short, developing correct
-concurrent applications under weak consistency requires large programmer effort
-in order to intricately reasoning about non-trivial memoty interactions on top
-an already non-deterministic programming model.
+To address these concerns, several systems~\cite{COPS, Eiger, Walter, Li2012,
+HAT} have proposed that provide a lattice of stronger guarantees on demand.
+While defining new consistency guarantees and implementing them in a
+geo-distributed storage infrastructure is certainly a commendable endeavour,
+how does one match the consistency requirements at the application level with
+the consistency guarantees offered by the store? How does one ensure that the
+composition of consistency guarantees of different operations result in a
+sensible behavior? In short, developing correct concurrent applications under
+weak consistency requires large programmer effort in order to intricately
+reasoning about non-trivial memoty interactions on top an already
+non-deterministic programming model.
 
+\section{My Thesis}
 
-%% * One way - strong consistency; simple abstraction, but complicated underneath.
-%%	 + Discuss the implication of shared memory multicore processors and distributed systems
-%% * Modern multicore and distributed systems eschew strong consistency in
-%%	 favor of weak memory consistency.
-%%	 + Implications - (1) absence of coherence (2) asynchrony and (3) eventual consistency
-%% * Dealing with this is not easy; provide evidence (TODO: references)
+In this dissertation, we argue that functional programming language
+abstractions can mitigate the complexity of programming weakly consistent
+systems. The key idea is that, since consistency issues arise out of shared
+state mutation, by controlling and minimizing mutation one can simplify the
+problem of programming under weak memory consistency.
 
+The dissertation presents three major contributions, each focussed on
+addressing a particular challenge associated with weakly consistent loosely
+coupled systems: (1) providing an efficient virtual shared memory abstraction
+over non cache coherent architectures by exploiting mutability information, (2)
+utilizing composable synchronous message-passing communication as an efficient
+abstraction for programming asynchronous distributed systems with the help of
+speculative execution, and (3) a mutation-free programming model for eventual
+consistency that automates the choice of mapping application-level consistency
+requirements to consistency levels offered by the geo-distributed data store.
+
+\section{Contributions}
+
+\subsection{Efficiently hiding the absence of cache coherence}
+
+The first contribution of this thesis is a series of techniques to efficiently
+hide the absence of cache coherence on a non cache coherent architecture, and
+provide the semblance of a shared coherent global address space with strong
+(sequential) consistency. We demonstrate this by designing and implementing
+\MMSCC, a parallel extension of MLton~\cite{MLton} Standard ML compiler and
+runtime system targetted at the 48-core memory-coupled, non cache coherent
+Intel SCC processor.
+
+Providing virtual shared memory on top of distributed memory architectures is
+certainly not a novel endeavour. Typically, non cache coherent architectures
+are organized such that each core or a collection of cores share a cache
+coherent address space (termed as a "coherence domain"), and utilize explicit
+communication or DMA transfers for traffic across coherence domains. Such
+virtual memory systems additionally implement all the necessary inter-core
+communication operations for scheduling and synchronization. This model has
+been used on the Cell BE processor for implementing shared-memory programming
+models such as OpenMP~\cite{OBrien}, COMIC~\cite{Lee2008},
+Sequoia~\cite{Houston2008} and CellSs~\cite{Bellens2006}, and on the Intel SCC
+for X10~\cite{Chapman2011} and Shared virtual memory model~\cite{Lankes2012}.
+These works typically expose the distribution in the programming model, provide
+specialized hooks into the architectural features, or are simply agnostic of
+the application level consistency requirements.
+
+Differing from these works our work utilizes the key property of
+mostly-functional languages (in our case, Standard ML enriched with concurrent
+threads and synchronous message passing), that is \emph{mutation is rare}, to
+efficiently realize a virtual memory abstration using just the language runtime
+mechanisms. We also identify that non cache coherent architectures provide
+several different alternatives for inter-core communication such as on-chip
+high-speed message passing interconnect, scalable NoC interconnect for
+transferring data directly between memory banks without involing the
+processors, and explicit cache control instructions. We aim to allow the same
+programs written for cache coherent architectures to efficiently run on non
+cache coherent architectures, while transparently mapping the source language
+structures and mechanisms on to the architecture's capabilities.
+
+Our initial system design utilizes thread-local garbage collector
+design~\cite{}, optimized for the SCC's memory hierarchy, to obtain a \MM
+system on the SCC. This design however incorporates both read and write
+barriers, and we identify that the cost of read barriers under \MM programming
+model is significant. To alleviate this, we design a novel thread local
+collector that utilizes ample concurrency in the programming model as a
+resource along with a dynamic shape analysis to eliminate the read barriers.
+Our final runtime design transparently utilizes SCC's support for software
+managed cache coherence and on-die message-passing interconnect to achieve an
+efficient implementation under which 99\% of the memory accesses can
+potentially be cached.
+
+\subsection{A prescription for safely relaxing synchrony}
+
+The second contribution of the thesis is to utilize synchronous communication
+over first-class channels as an abstraction for programming asynchronous
+distributed systems, just as garbage collection is to memory management and
+software transactional memory is to shared memory concurrent
+programming~\cite{Grossman}. A mostly functional programming language combined
+with synchronous message passing over first-class channels offers an attractive
+and generic model for expressing fine-grained concurrency. In particular, an
+expressive langauge like ConcurrentML~\cite{Reppy99} composable synchronous
+events, the synchronous communication simplifies program reasoning by combining
+data transfer and synchronization into a single atomic unit. However, in a
+distributed setting, such a programming model becomes unviable due to two
+reasons:
+
+\begin{itemize}
+\item In a geo-distributed setting, synchronization requires coordination
+between nodes, which is at odds with the high inter-node latency.
+\item As discussed previously, the point-to-point first-class channel
+abstraction requires strong consistency. In particular, the channel abstraction
+ensures that values are consumed \emph{exactly-once}, which requires
+coordination between nodes that might potentially consume a particular value on
+the channel.
+\end{itemize}
+
+While switching to an explicit asynchronous communication model between nodes
+can improve performance, it complicates inter-node synchronization and
+introduces naming issues. No longer can a programmer abstractly reason about a
+collection of nodes that might send or receive values on a named channel, but
+has to identify, communicate and coordinate with individual nodes.
+Additionally, the onus falls on the programmers to handle partial failures and
+network partitions. Thus, the loss of synchronous communication abstraction
+significantly burdens the programmer.
+
+The key contribution of this work is to utilize synchronous communication as an
+abstraction to express programs for high-latency distributed systems, but
+\emph{speculatively} discharge the communications asynchronously, and ensure
+that the observable behavior mirros that of the original synchronous program.
+The key discovery is that the necessary and sufficient condition for divergent
+behavior (mis-speculation) is the presence of happens-before cycle in the
+depen- dence relation between communication actions. We prove this theorem over
+an axiomatic formulation that precisely captures the semantics of speculative
+execution. Utilizing this idea, we build an optimistic concurrency control
+mechanism for concurrent ML programs, on top of MultiMLton, capable of running
+in compute clouds. The implementation uses a novel un-coordinated
+checkpoint-recovery mechanism to detect and remediate mis-speculations. Our
+experiments on Amazon EC2 validate our thesis that this technique is quite
+useful in practice.
+
+\subsection{Declarative programming for eventual consistency}
+
+The final contribution of this thesis addresses two related challenges when
+programming under eventual consistency on top of geo-distributed stores:
+
+\begin{itemize}
+\item How do you describe practical and scalable eventually consistent data types?
+\item How do you map the application level consistency properties automatically
+to the most efficient of the consistency levels provided by the store?
+\end{itemize}
+
+Let us expand on the challenges associated with each of these goals.
+
+Typically, commercial geo-distributed stores such as DynamoDB~\cite{DynamoDB},
+Cassandra~\cite{Cassandra}, Riak~\cite{Riak} provide a data model that is
+reminiscent distributed maps. The key-value pair is usually treated as
+registers, with a default last-write-wins (LWW) conflict resolution policy.
+Since a LWW register is not suitable for every use case, a small collection of
+convergent data types such as counters and sets~\cite{SSS} are also provided.
+Often the programmer has to coerec the problem at hand, which might naturally
+be expressed as operations over a particular abstract datatype into the ones
+that are supported by the store. Unlike a concurrent program written for shared
+memory multicore processor, the operation on low-level convergent replicated
+data types cannot be composed together well; with no practical consistency
+control mechanisms such as fences and locks, the programmer has but to reason
+about the intricate weak consistency behaviors between composed operation.
+Often, without the necessary abstractions, it is impossible to achieve the
+desired semantics, and hence, the application ends up exposing the weak
+consistency behavior to the user.
+
+In addition, although the store might provide stronger consistency guaratnees,
+the lack of precise description of these guarantees, and the inherent
+difficulty in mapping application-level consistency requirements to store-level
+guarnatees leads to subtle weak consistency bugs. Although there has been
+progress on the theoretical front to address the concern of reason about
+concurrent programs on eventually consistent stores~\cite{}, realization of
+these techniques on full-fledged commercial store implementations has not yet
+come by. Thus, the lack of a suitable programming model for practical
+replicated data types hinders software development for eventually consistent
+systems.
+
+To address these issues, we present \quelea programming system for
+declaratively programming eventually consistent systems. Inspired by
+operation-based convergent replicated data types, data types in quelea are
+defined in terms of its interfaces, and the effects that an operation has on a
+data type. Importantly, the state of an object is simply the set of all effects
+performed on this object. Every operation performs a \emph{fold} over this set,
+and might optionally produce a new effect. The effects performed at a
+particular replica is asynchronously transmitted to other replicas. Since each
+operation witnesses all the effects, concurrent or otherwise, performed on the
+object so far, semantically conflicting operations can be resolved
+deterministically. We will see that this particular abstraction is powerful
+enough to describe complex real-world scenarios such as twitter-like
+microblogging service and an ebay-like auction site.
+
+-- on top of cassandra.
+
+-- mapping contracts to implementations.
+
+\section{Road map}
