@@ -358,12 +358,12 @@ and might optionally produce a new effect. The effects performed at a
 particular replica is asynchronously transmitted to other replicas. Since each
 operation witnesses all the effects, concurrent or otherwise, performed on the
 object so far, semantically conflicting operations can be resolved
-deterministically. We will see that this particular abstraction is powerful
-enough to describe complex real-world scenarios such as twitter-like
+deterministically. As we will see, this particular abstraction is powerful
+enough to describe complex real-world scenarios including twitter-like
 microblogging service and an ebay-like auction site.
 
 -- on top of cassandra.
 
--- mapping contracts to implementations.
+-- mapping contracts to implementations. transaction contracts.
 
 \section{Road map}
