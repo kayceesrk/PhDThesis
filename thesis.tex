@@ -44,22 +44,29 @@
 % CHANGE NEXT LINE?
 \usepackage{multicol}
 
-% Define "subfigure" environment used in "demo-figure.tex".
-% CHANGE NEXT LINE?
-\usepackage{subfigure}
-
 % Added by KC
 \usepackage{hyperref}
 \usepackage{xspace}
 \usepackage{amssymb}
+
+\usepackage{listings}
+\usepackage{framed}
+%\usepackage{subfig}
+\usepackage{stfloats}
+\usepackage[tight]{subfigure}
+\usepackage[small,bf]{caption}
+\usepackage[usenames,dvipsnames]{color}
+
 \usepackage{tikz}
 \usepackage{stackrel}
 \usepackage{fontenc}
 \usepackage{times}
 \usepackage{textcomp}
 \usepackage{wrapfig}
-\newcommand{\ftextrecipe}{{\fontfamily{tmr}\selectfont \textrecipe}}
 
+
+\newcommand{\ftextrecipe}{{\fontfamily{tmr}\selectfont \textrecipe}}
+\newcommand{\cf}[1]{\,{\tt #1}\,}
 
 % Title of thesis (used on cover and in abstract).
 % The title shown must be the full, official title of the thesis.
@@ -196,6 +203,7 @@
 % Reference: TM2006, page 31.
 % CHANGE NEXT LINE?
 \include{introduction}
+\include{MultiMLton}
 
 % Summary and/or conclusions are optional but often used.
 % The summary and/or conclusions often are the last
