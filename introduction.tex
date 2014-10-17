@@ -260,16 +260,15 @@ potentially be cached.
 
 \subsection{A prescription for safely relaxing synchrony}
 
-The second contribution of the thesis is to utilize synchronous communication
-over first-class channels as an abstraction for programming asynchronous
-distributed systems, just as garbage collection is to memory management and
-software transactional memory is to shared memory concurrent
-programming~\cite{Grossman2007}. A mostly functional programming language combined
-with synchronous message passing over first-class channels offers an attractive
-and generic model for expressing fine-grained concurrency. In particular, an
-expressive langauge like ConcurrentML~\cite{Reppy99} composable synchronous
-events, the synchronous communication simplifies program reasoning by combining
-data transfer and synchronization into a single atomic unit. However, in a
+The second contribution of the thesis is \rxcml, an optimistic variant of
+Concurrent ML~\cite{Reppy99}. \rxcml utilizes synchronous communication over
+first-class channels as an abstraction for programming asynchronous distributed
+systems. A mostly functional programming language combined with synchronous
+message passing over first-class channels offers an attractive and generic
+model for expressing fine-grained concurrency. In particular, an expressive
+langauge like ConcurrentML~\cite{Reppy99} composable synchronous events, the
+synchronous communication simplifies program reasoning by combining data
+transfer and synchronization into a single atomic unit. However, in a
 distributed setting, such a programming model becomes unviable due to two
 reasons:
 
@@ -394,3 +393,17 @@ declarative reasoning, but is also practically achievable on top of
 industrial-strength geo-distributed stores.
 
 \section{Road map}
+
+The rest of the dissertation is organized as follows. Chapter~\cite{chap:mm}
+describes the \MM programming model and runtime system, which serves as the
+exploration vehicle for \MMSCC and \rxcml. Chapter~\cite{chap:scc} presents the
+architecture and programming model of the Intel SCC processor.
+Chapter~\cite{chap:scc} presents \MMSCC, the port of \MM to the Intel SCC
+platform that provides a cache coherent shared memory abstraction for a
+concurrent extension of Standard ML. Chapter~\cite{chap:rxcml} presents \rxcml,
+an optimistic variant of Concurrent ML~\cite{Reppy09} for distributed systems.
+Chapter~\cite{chap:quelea} presents \quelea, a programming system for
+eventually consistent geo-distributed stores. Related work is presented at the
+end of each chapter. Additional related work that is relevant to the future
+direction of this research is given in chapter~\cite{chap:conclusion}, along
+with concluding remarks.
