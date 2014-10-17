@@ -226,7 +226,7 @@ communication or DMA transfers for traffic across coherence domains. Such
 virtual memory systems additionally implement all the necessary inter-core
 communication operations for scheduling and synchronization. This model has
 been used on the Cell BE processor for implementing shared-memory programming
-models such as OpenMP~\cite{OBrien}, COMIC~\cite{Lee2008},
+models such as OpenMP~\cite{OBrien2008}, COMIC~\cite{Lee2008},
 Sequoia~\cite{Houston2008} and CellSs~\cite{Bellens2006}, and on the Intel SCC
 for X10~\cite{Chapman2011} and Shared virtual memory model~\cite{Lankes2012}.
 These works typically expose the distribution in the programming model, provide
@@ -264,7 +264,7 @@ The second contribution of the thesis is to utilize synchronous communication
 over first-class channels as an abstraction for programming asynchronous
 distributed systems, just as garbage collection is to memory management and
 software transactional memory is to shared memory concurrent
-programming~\cite{Grossman}. A mostly functional programming language combined
+programming~\cite{Grossman2007}. A mostly functional programming language combined
 with synchronous message passing over first-class channels offers an attractive
 and generic model for expressing fine-grained concurrency. In particular, an
 expressive langauge like ConcurrentML~\cite{Reppy99} composable synchronous
@@ -321,7 +321,7 @@ to the most efficient of the consistency levels provided by the store?
 Let us expand on the challenges associated with each of these goals.
 
 Typically, commercial geo-distributed stores such as DynamoDB~\cite{DynamoDB},
-Cassandra~\cite{Cassandra}, Riak~\cite{Riak} provide a data model that is
+Cassandra~\cite{Lakshman2010}, Riak~\cite{Riak} provide a data model that is
 reminiscent distributed maps. The key-value pair is usually treated as
 registers, with a default last-write-wins (LWW) conflict resolution policy.
 Since a LWW register is not suitable for every use case, a small collection of
@@ -362,8 +362,35 @@ deterministically. As we will see, this particular abstraction is powerful
 enough to describe complex real-world scenarios including twitter-like
 microblogging service and an ebay-like auction site.
 
--- on top of cassandra.
+Implementing and maintaining a robust, scalable geo-distributed store is a
+significant undertaking. Indeed, concerns such as liveness, replication,
+durability and failure handling must be handled by any realistic distributed
+store implementation, but are orthogonal to the consistency related safety
+properties that we aim to address in this work. Instead or replicating the
+massive engineering effort and in the process introducing subtle concurrency
+and scalability issues, we realize \quelea as a shim layer on top of the
+industrial strength data store, Cassandra~\cite{Lakshman2010}. This separation
+of concerns allows the \quelea programming model to be ported to other
+distributed stores as well.
 
--- mapping contracts to implementations. transaction contracts.
+In addition to the datatype description language, \quelea supports a
+\emph{contract} language for describing the application-level consistency
+properties. The contract language is used to express valid concurrent
+executions utilizing a particular replicated data type, over a small corpus of
+primitive relations, capturing properties such as visibility and session order.
+The executions described are similar to the the axiomatic description of of
+relaxed memory models~\cite{Demange2013}, declaratively capturing the
+well-formed behaviors in the program. Given a set of store-level consistency
+guarantees, also expressed in the same contract language, we statically map
+each datatype operation to one of the store-level consistency properties.
+
+Finally, our implementation of the \quelea programming model not only supports
+primitive operations, but also a series of \emph{coordination-free
+transactions}. Similar to basic operations, we utilize the same contract
+language to map the user-defined transactions to one of the store-specific
+transaction isolation levels. The thesis illustrates that a mutation-free
+programming model for eventually consistent stores not only enables expressive
+declarative reasoning, but is also practically achievable on top of
+industrial-strength geo-distributed stores.
 
 \section{Road map}
