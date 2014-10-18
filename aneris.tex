@@ -1,4 +1,4 @@
-\newcommand{\lc}{TL}
+\newcommand{\lc}{LC}
 \newcommand{\prc}{PR}
 \newcommand{\smc}{SMC}
 \newcommand{\kcore}{k_{core}}
@@ -141,7 +141,7 @@ fully fit in the MPB) and the DRAM for larger messages. Despite having a higher
 bandwidth and lower latency, the synchronization costs involved in transferring
 a large multi-part message over the MPB overweighs the benefits.
 
-\section{Local Collector (LC)}
+\section{Local Collector (\lc)}
 \label{sec:lc}
 
 Splitting a program heap among a set of cores is a useful technique to exploit
@@ -356,8 +356,6 @@ This ensures that the registers never point to forwarded objects either. Hence,
 no read barriers are required for dereferencing object pointers from the stack
 or registers. This optimization is analogous to ``eager" read barriers as
 described in~\cite{Bacon03}. Eager read barrier elimination has marked
-performance benefits for repeated object accesses, such as array element
-traversals in a loop, where the read barrier is executed once when the array
 location is loaded into a register, but all further accesses can elide
 executing the barrier.
 
@@ -366,7 +364,8 @@ executing the barrier.
 \begin{figure}
   \centering
   \includegraphics[width=0.9\textwidth]{Graphs/RB_overhead}
-  \caption{Read barrier overhead as a percentage of mutator time.}
+	\caption{Read barrier overhead as a percentage of mutator time. The error
+	bars represent 95\% confidence intervals using Student's t-distribution.}
   \label{fig:rb-overhead}
 \end{figure}
 
@@ -376,26 +375,27 @@ Figure~\ref{fig:rb-overhead} shows these overheads as a percentage of mutator
 time. Our experiments reveal that, on average, the mutator spends 15.3\% of the
 time executing read barriers for our benchmarks.
 
-\begin{table}[hbt]
+\begin{table}
 \begin{center}
 \begin{tabular} {l r r}
 \hline
 {\bf Benchmark} & {\bf RB invocations ($\times 10^6$)} & {\bf Forwarded}\\
 \hline
-{AllPairs} & 9,753 & 123 \\
-{BarnesHut} & 2,864 & 52,702 \\
-{CountGraphs} & 2,584 & 0 \\
-{GameOfLife} & 4,858 & 2,143 \\
-{KClustering} & 3,780 & 101 \\
-{Mandelbrot} & 2,980 & 23 \\
-{Nucleic} & 2,887 & 328 \\
-{Raytrace} & 2,217 & 0 \\
+{AllPairs} & 9,753 \ci{431} & 123 \ci{11} \\
+{BarnesHut} & 2,864 \ci{176} & 52,702 \ci{1830} \\
+{CountGraphs} & 2,584 \ci{119} & 0 \ci{0} \\
+{GameOfLife} & 4,858 \ci{276} & 2,143 \ci{43}\\
+{KClustering} & 3,780 \ci{265} & 101 \ci{7} \\
+{Mandelbrot} & 2,980 \ci{79} & 23 \ci{3} \\
+{Nucleic} & 2,887 \ci{135} & 328 \ci{21} \\
+{Raytrace} & 2,217 \ci{90} & 0 \ci{0}\\
 \hline
 \end{tabular}
 \end{center}
-\caption{Effectiveness of read barrier checks: RB invocations represents the number of
-read barrier invocations and forwarded represents the number of instances when
-the read barrier encountered a forwarded object.}
+\caption{Effectiveness of read barrier checks: RB invocations represents the
+average number of read barrier invocations and forwarded represents the average
+number of instances when the read barrier encountered a forwarded object. The
+95\% confidence intervals using Student's t-distribution is also reported.}
 \label{tab:rb_utility}
 \end{table}
 
@@ -1022,3 +1022,83 @@ of the immutable object is safe under MultiMLton.
 
 If the channel and the message are located in the shared heap, communication
 only involves a value or a pointer exchange. This case is similar to case 1.
+
+\section{Evaluation}
+\label{sec:gc_bench}
+
+For our experimental evaluation, we picked 8 benchmarks from the MLton
+benchmark suite. The benchmarks were derived from sequential standard ML
+implementation and were parallelized using ACML~\cite{Ziarek11}. The benchmarks
+are:
+
+\begin{itemize}
+\item {\bf AllPairs}: an implementation of Floyd-Warshall algorithm for
+computing all pairs shortest path.
+\item {\bf BarnesHut}: an n-body simulation using Barnes-Hut algorithm.
+\item {\bf CountGraphs}: computes all symmetries (automorphisms) within a set
+of graphs.
+\item {\bf GameOfLife}: Conway's Game of Life simulator
+\item {\bf Kclustering}: a k-means clustering algorithm, where each stage is
+spawned as a server.
+\item {\bf Mandelbrot}: a Mandelbrot set generator.
+\item {\bf Nucleic}: Pseudoknot~\cite{Pseudoknot} benchmark applied on multiple
+inputs.
+\item {\bf Raytrace}: a ray-tracing algorithm to render a scene.
+\end{itemize}
+
+\begin{table}
+\begin{center}
+\begin{tabular} {|l|r|r|r|r|}
+\hline
+\multirow{2}{*}{{\bf Benchmark}} & {\bf Allocation Rate} 	& \multicolumn{2}{|c|}{{\bf Allocation}} & \multirow{2}{*}{\bf \# Threads} \\
+\cline{3-4}
+																 & \multicolumn{1}{|c|}{{\bf (MB/s)}}						& {\bf Total (GB)} & {\bf \% Sh}	&	\\
+\hline
+{AllPairs} 		& 53 	\ci{2.3} & 16 \ci{0.23} 	& 11 	\ci{0.09} & 512 \\
+{BarnesHut} 	& 70 	\ci{2.3} & 20 \ci{0.25} 	& 2		\ci{0.02} & 1024 \\
+{CountGraphs} & 144 \ci{3.8} & 24 \ci{0.32} 	& 1		\ci{0.01} & 256 \\
+{GameOfLife} 	& 127 \ci{5.0} & 21 \ci{0.47} 	& 13	\ci{0.17} & 1024 \\
+{KClustering} & 108 \ci{2.9} & 32	\ci{0.31} 	& 3		\ci{0.05} & 1024 \\
+{Mandelbrot} 	& 43 	\ci{1.7} & 2	\ci{0.02} 	& 8		\ci{0.03} & 512 \\
+{Nucleic} 		& 87 	\ci{3.4} & 14	\ci{0.17} 	& 1		\ci{0.00} & 384 \\
+{Raytrace} 		& 54 	\ci{2.6} & 12	\ci{0.14} 	& 4		\ci{0.03} & 256 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Benchmark characteristics. \%Sh represents the average fraction of
+bytes allocated in the shared heap. 95\% confidence intervals using Student's
+t-distribution is also reported.}
+\label{tab:bench_char}
+\end{table}
+
+The core, mesh controller, and memory on the SCC can be configured to run at
+different frequencies. For our experiments we chose 533 MHz, 800 MHz, and 800
+MHz for core, mesh, and memory respectively. The benchmark characteristics is
+given in Figure~\ref{tab:bench_char}. The numbers were obtained using local
+collector (\lc) with programs running on 48 cores, and the average of the
+results is reported. The benchmarks were designed such that the input size and
+the number of threads are tunable. Out of the total bytes allocated during the
+program execution, on average 5.4\% is allocated in the shared heap. Thus, most
+of the objects allocated are collected locally, without the need for stalling
+all of the mutators. The allocation rate on the SCC is typically much lower
+than comparable general purpose commerical offerings. On the SCC, not only is
+the processor slow (533MHz) but also the serial memory bandwidth for our
+experimental setup is only around 70 MB/s.
+
+\subsection{Performance}
+
+\begin{figure}
+  \centering
+  \subfigure[Speedup]{\label{fig:speedup}\includegraphics[width=0.45\textwidth]{Graphs/speedup_scc_heap}}
+  \subfigure[Total time (48 cores)]{\label{fig:time_SCC}\includegraphics[width=0.45\textwidth]{Graphs/time_scc}}
+  \subfigure[Mutator time (48 cores)]{\label{fig:mutator_time_SCC}\includegraphics[width=0.45\textwidth]{Graphs/mutator_time_scc}}
+  \subfigure[GC time (48 cores)]{\label{fig:gc_time_SCC}\includegraphics[width=0.45\textwidth]{Graphs/gc_time_scc}}
+	\caption{Performance comparison of local collector with read barriers (LC),
+	procrastinating collector without read barriers (PRC), and collector
+	utilizing software-managed cache coherence (SMC) : Geometric mean for 8
+	benchmarks.}
+  \label{fig:time}
+\end{figure}
+
+Figurue~\ref{fig:time} presents the speedup results and illustrates space-time trade-offs critical for any
+garbage collector evaluation.
