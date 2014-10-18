@@ -227,8 +227,10 @@ functions at every application. Finally, the program is defunctionalized,
 replacing the higher-order functions with data structures to represent them and
 first-order functions to apply them. The resultant intermediate language is in
 Static Single Assignment (SSA) form~\cite{SSA}. Much of the aggressive
-optimizations are performed in SSA passes. The compiler can produce native code
-for multiple backends as well as portable C output.
+optimizations are performed in SSA passes. The SSA code is then transformed to
+RSSA intermediate representation. RSSA is similar SSA, but exposes data
+representations decisions that leads to further optimizations. The compiler can
+produce native code for multiple backends as well as portable C output.
 
 \section{Runtime System}
 

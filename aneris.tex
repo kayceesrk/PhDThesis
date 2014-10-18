@@ -1,5 +1,5 @@
-\newcommand{\lc}{LC}
-\newcommand{\ta}{TA}
+\newcommand{\lc}{TL}
+\newcommand{\prc}{PR}
 \newcommand{\smc}{SMC}
 \newcommand{\kcore}{k_{core}}
 \newcommand{\kmesh}{k_{mesh}}
@@ -31,7 +31,7 @@ collection.} (\lc) design~\cite{} that partitions the heap into local heaps on
 each core and a shared heap for cross-core communication. However, we observe
 that the cost of memory barriers utilized in preserving the heap invariants
 have significant costs. To eliminitate theses costs, we propose a new GC design
-(\ta) that utilizes the ample concurrency offered by our programming model
+(\prc) that utilizes the ample concurrency offered by our programming model
 combined with a dynamic shape analysis to eliminate some of the GC overheads.
 This naturally leads to a GC design that focuses on
 \emph{procrastination}~\cite{mmgc}, delaying writes that would necessitate
@@ -43,12 +43,13 @@ requiring a full traversal of the local heap to fix existing references;
 cleanliness enables an important optimization that achieves the effect of
 procrastination without actually having to initiate a thread stall. Our final
 design (\smc) integrates SCC's support for software-managed cache coherence
-into the extant memory barriers to improve the design further.
+(SMC)~\cite{SMC} into the extant memory barriers to improve the design further.
 
 We begin by discussing in detail the architecture and programming model of the
 SCC, which serves as our prototype non cache coherent architecture. However,
 the use of SCC by no means restricts the applicability of our ideas to other
-scalable manycore architectures~\cite{mmgc}.
+scalable manycore architectures~\cite{mmgc}. Then, we present the three GC
+designs. Finally, we present a comprehensive evaluation of the three designs.
 
 \section{The Intel Single-chip Cloud Computer}
 
@@ -107,16 +108,20 @@ as having message passing buffer type (MPBT).
 
 Data typed as MPBT bypass L2 and go directly to L1. SCC also provides a
 special, 1-cycle instruction called \cf{CL1INVMB} that marks all data of type
-MPBT as invalid L1 lines. In addition, special 1-cycle instructions are
-provided to flush (\cf{INVFLUSH}) and invalidate (\cf{INV}) L1 cache data.
-Since the cores use write-combine buffers, a correct flushing procedure should
-also flush the write-combine buffers. SCC does not provide primitive support
-for this purpose, but write-combine buffers can easily be flushed in software
-by perfoming a series of dummy writes to distinct memory locations, which fills
-the buffer and flushes any previous writes. Typically, a programmer works with
-release consistency in order to utilize cached shared virtual memory. Let us
-assume that a core issues a \cf{smcAcquire()} to fetch changes from other cores
-and issues \cf{smcRelease()} to publish its updates.
+MPBT as invalid L1 lines. In addition, the usual \cf{WBINVD} instruction can be
+used to flush and invalidate the L1 cache. Since the cores use write-combine
+buffers, a correct flushing procedure should also flush the write-combine
+buffers. SCC does not provide primitive support for this purpose, but
+write-combine buffers can easily be flushed in software by perfoming a series
+of dummy writes to distinct memory locations, which fills the buffer and
+flushes any previous writes.
+
+Typically, a programmer works with release consistency in order to utilize
+cached shared virtual memory. The SMC~\cite{SMC} library provides
+\cf{smcAcquire()} to fetch changes from other cores (invalidates MPBT cache
+lines in L1 cache) and issues \cf{smcRelease()} to publish its updates (flushes
+the L1 cache, if the cache is operating in write back mode, and flushes the
+write-combine buffers).
 
 SCC's software stack also includes cross-core message-passing libraries
 implemented over the MPBs, including RCCE~\cite{Mattson2010} and
@@ -136,7 +141,8 @@ fully fit in the MPB) and the DRAM for larger messages. Despite having a higher
 bandwidth and lower latency, the synchronization costs involved in transferring
 a large multi-part message over the MPB overweighs the benefits.
 
-\section{Local Collector Design}
+\section{Local Collector (LC)}
+\label{sec:lc}
 
 Splitting a program heap among a set of cores is a useful technique to exploit
 available parallelism on scalable multicore platforms: each core can allocate,
@@ -146,14 +152,15 @@ allows local heaps to be collected independently, with coordination required
 only for global heap collection. In contrast, stop-the-world collectors need a
 global synchronization for every collection.
 
+\subsection{Heap Architecture}
+
 \begin{figure}
 \centering
-\includegraphics[scale=0.75]{Figures/LocalCollector.pdf}
+\includegraphics[width=1\textwidth]{Figures/LocalCollector.pdf}
 \caption{Local collector heap organization for the SCC}
 \label{fig:lc}
 \end{figure}
 
-\subsection{Heap Architecture}
 
 Our local collector design for the SCC is shown in Figure~\ref{fig:lc}. The key
 idea here is that the local heaps are allocated in each of the cores
@@ -282,8 +289,6 @@ system.
 \subsection{Read Barrier Design}
 
 \begin{figure}
-\centering
-\begin{minipage}{3.5in}
 \begin{lstlisting}
 pointer readBarrier (pointer p) {
   if (!isPointer(p)) return p;
@@ -292,7 +297,6 @@ pointer readBarrier (pointer p) {
   return p;
 }
 \end{lstlisting}
-\end{minipage}
 \caption{Read barrier.}
 \label{code:read_barrier}
 \end{figure}
@@ -405,7 +409,7 @@ substantial, but only rarely do they have to perform the task of forwarding
 references. These results motivate our interest in a memory management design
 that eliminates read barriers altogether.
 
-\section{Procrastinating Collector Design}
+\section{Procrastinating Collector (\prc)}
 
 Eliminating read barriers, however, is non-trivial. Abstractly, one can avoid
 read barriers by eagerly \emph{fixing} all references that point to forwarded
@@ -455,3 +459,566 @@ the \acml\ runtime model. Our technique does not rely on programmer
 annotations, static analysis or compiler optimizations to eliminate read
 barriers, and can be completely implemented as a lightweight runtime technique.
 
+\subsection{Cleanliness Analysis}
+\label{sec:clean}
+
+Although \acml provides an abundance of concurrency, with the procrastination
+mechanism, many of the threads in a program may end up blocked on exporting
+writes, waiting for a local garbage collection to unblock them. If all of the
+threads on a particular core have procrastinated, then a local garbage
+collection is needed in order to make progress. Such \emph{forced} local
+garbage collections make the program run longer, and hence subdue the benefit
+of eliminating read barriers. Hence, it is desirable to avoid procrastination
+whenever possible.
+
+In this section, we describe our cleanliness analysis, which identifies objects
+on which exporting writes do not need to be stalled. We first present auxiliary
+definitions that will be utilized by cleanliness checks, and then describe the
+analysis.
+
+\subsubsection{Heap session}
+
+Objects are allocated in the local heap by bumping the local heap frontier. In
+addition, associated with each local heap is a pointer called \cf{sessionStart}
+that always points to a location between the start of the heap and the
+frontier. This pointer introduces the idea of a \emph{heap session}, to capture
+the notion of recently allocated objects. Every local heap has exactly two
+sessions: a \emph{current session} between the \cf{sessionStart} and the heap
+frontier and a \emph{previous session} between the start of the heap and
+\cf{sessionStart}. Heap sessions are used by the cleanliness analysis to limit
+the range of heap locations that need to be scanned to test an object
+closure\footnote{In the following, we write \emph{object closure} to mean the
+set of objects reachable from some root on the heap; to avoid confusion, we
+write \emph{function closure} to mean the representation of an SML function as
+a pair of function code pointer and static environment.} for cleanliness.
+Assigning the current local heap frontier to the \cf{sessionStart} pointer
+starts a new session. We start a new session on a context switch, a local
+garbage collection and after an object has been lifted to the shared heap.
+
+\subsubsection{Reference count}
+
+We introduce a limited reference counting mechanism for local heap objects that
+counts the number of references from other local heap objects. Importantly, we
+do not consider references from ML thread stacks. The reference count is
+meaningful only for objects reachable in the current session. For such objects,
+the number of references to an object can be one of four values: \cf{ZERO},
+\cf{ONE}, \cf{LOCAL\_MANY}, and \cf{GLOBAL}. We steal 2 bits from the object
+header to record this information. A reference count of \cf{ZERO} indicates
+that the object only has references from registers or stacks, while an object
+with a count of \cf{ONE} has exactly one pointer from the current session. A
+count of \cf{LOCAL\_MANY} indicates that this object has more than one
+reference, but that all of these references originate from the current session.
+\cf{GLOBAL} indicates that the object has at least one reference that
+originates from outside the current session.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.6\textwidth]{Figures/std_reference_count}
+\caption{State transition diagram detailing the behavior of the reference
+counting mechanism with respect to object \cf{x} involved in an assignment,
+\cf{r := x}, where \cf{P}$_\textrm{\cf{r}}$ = \cf{isInCurrentSession(r)}.}
+\label{fig:std_ref_count}
+\end{figure}
+
+The reference counting mechanism is implemented as a part of the write barrier
+(Lines 13--22 in Figure~\ref{code:writeBarrier}).
+Figure~\ref{fig:std_ref_count} illustrates the state transition diagram for the
+reference counting mechanism. Observe that reference counts are non-decreasing.
+Hence, the reference count of any object represents the maximum number of
+references that pointed to the object at any point in its lifetime.
+
+\subsubsection{Cleanliness}
+
+An object closure is said to be clean, if for each object reachable from the
+root of the object closure,
+
+\begin{itemize}
+\item the object is immutable or in the shared heap. Or,
+\item the object is the root, and has \cf{ZERO} references. Or,
+\item the object is not the root, and has \cf{ONE} reference. Or,
+\item the object is not the root, has \cf{LOCAL\_MANY} references, and is in the
+current session.
+\end{itemize}
+
+\noindent Otherwise, the object closure is not clean.
+
+\begin{figure}
+\begin{lstlisting}
+bool isClean (pointer p, bool* isLocalMany) {
+  clean = true;
+  foreach o in reachable(p) {
+    if (!isMutable(o) || isInSharedHeap(o))
+      continue;
+    nv = getRefCount(o);
+    if (nv == ZERO)
+      clean &&= true;
+    else if (nv == ONE)
+      clean &&= (o != p);
+    else if (nv == LOCAL_MANY) {
+      clean &&= (isInCurrentSession(o));
+      *isLocalMany = true;
+    }
+    else
+      clean = false;
+  }
+  return clean;
+}
+\end{lstlisting}
+\caption{Cleanliness check.}
+\label{code:cleanliness}
+\end{figure}
+
+Figure~\ref{code:cleanliness} shows an implementation of an object closure
+cleanliness check. Since the cleanliness check, memory barriers, and the
+garbage collector are implemented in low-level code (C, assembly and low-level
+intermediate language in the compiler), this code snippet, and others that
+follow in this section are in pseudo-C language, to better represent their
+implementation. If the source of an exporting assignment is immutable, we can
+make a copy of the immutable object in the shared heap, and avoid introducing
+references to forwarded objects. Standard ML does not allow the programmer to
+test the referential equality of immutable objects. Equality of immutable
+objects is always computed by structure. Hence, it is safe to replicate
+immutable objects. If the object is already in the shared heap, there is no
+need to move this object.
+
+\begin{figure}
+\centering
+\subfigure[Tree-structured object closure]{\label{fig:cleanliness_tree}\includegraphics[width=0.8\textwidth]{Figures/Cleanliness_Tree}}\\
+\subfigure[Session-based cleanliness]{\label{fig:cleanliness_session}\includegraphics[width=0.8\textwidth]{Figures/Cleanliness_Session}}
+\caption{Utilizing object closure cleanliness information for exporting writes to avoid references to forwarded objects.}
+\label{fig:cleanliness_examples}
+\end{figure}
+
+If the object closure of the source of a exporting write is clean, we can move
+the object closure to the shared heap and quickly fix all of the forwarding
+pointers that might be generated. For example, consider an object that defines
+a tree structure; such an object is clean if the root has \cf{ZERO} references
+and all of its internal nodes have \cf{ONE} reference from their parent.  A
+root having \cf{ZERO} references means it is accessed only via the stack; if it
+had a count of \cf{ONE}, the outstanding reference may emanate from the heap.
+Internal nodes having a reference count of \cf{ONE} implies they are reachable
+only via other nodes in the object being traced.
+Figure~\ref{fig:cleanliness_tree} shows such an object closure. In this
+example, we assume that all objects in the object closure are mutable. The
+reference count of relevant nodes is given in the brackets.  Both the root and
+internal nodes can have pointers from the current stack not tracked by the
+reference count. After lifting the object closure, the references originating
+from the current stack are fixed by walking the stack.
+
+Object closures need not just be trees and can be arbitrary graphs, with
+multiple incoming edges to a particular object in the object closure. How do we
+determine if the incoming edges to an object originate from the object closure
+or from outside the object closure (from the local heap)? We cannot answer this
+question without walking the local heap. Hence, we simplify the question to
+asking whether all the pointers to an object originate from the current
+session. This question is answered in the affirmative if an object has a
+reference count of \cf{LOCAL\_MANY} (lines 11--13 in
+Figure~\ref{code:cleanliness}).
+
+Figure~\ref{fig:cleanliness_session} shows an example of a object closure whose
+objects have at most \cf{LOCAL\_MANY} references. Again, we assume that all
+objects in the object closure are mutable. In the transitive object closure
+rooted at \cf{p}, object \cf{q} has locally many references. These references
+might originate from the object closure itself (edges \cf{p $\rightarrow$ q}
+and \cf{s $\rightarrow$ q}) or from outside the object closure (edge \cf{a
+$\rightarrow$ q}). After lifting such object closures to the shared heap, only
+the current session is walked to fix all of the references to forwarded objects
+created during the copy. In practice (Section~\ref{sec:impact_session}),
+current session sizes are much smaller than heap sizes, and hence exporting
+writes can be performed quickly.
+
+Finally, in the case of \cf{LOCAL\_MANY} references, the object closure is
+clean, but unlike other cases, after lifting the object closure to the shared
+heap, the current session must be walked to fix any references to forwarded
+objects. This is indicated to the caller of \cf{isClean} function by assigning
+\cf{true} to \cf{*isLocalMany}, and is used in the implementation of lifting an
+object closure to the shared heap (Figure~\ref{code:lift}).
+
+\subsection{Write barrier}
+\label{sec:write_barrier}
+
+\begin{figure}
+\begin{lstlisting}
+Val writeBarrier (Ref r, Val v) {
+  if (isObjptr(v)) {
+    //Lift if clean or procrastinate
+    if (isInSharedHeap(r) &&
+        isInLocalHeap(v)) {
+      isLocalMany = false;
+      if (isClean(v, &isLocalMany))
+        v = lift(v, isLocalMany);
+      else
+        v = suspendTillGCAndLift(v);
+    }
+    //Tracking cleanliness
+    if (isInLocalHeap (r) &&
+        isInLocalHeap(v)) {
+      n = getRefCount(v);
+      if (!isInCurrentSession (r))
+        setNumRefs(v, GLOBAL);
+      else if (n == ZERO)
+        setNumRefs(v, ONE);
+      else if (n < GLOBAL)
+        setNumRefs(v, LOCAL_MANY);
+    }
+  }
+  return v;
+}
+\end{lstlisting}
+\caption{Write barrier implementation.}
+\label{code:writeBarrier}
+\end{figure}
+
+In this section, we present the modifications to the write barrier to eliminate
+the possibility of creating references from reachable objects in the local heap
+to a forwarded object. The implementation of our write barrier is presented in
+Figure~\ref{code:writeBarrier}. A write barrier is invoked prior to a write and
+returns a new value for the source of the write. The check \cf{isObjptr} at
+line 2 returns true only for heap allocated objects, and is a compile time
+check. Hence, for primitive valued writes, there is no write barrier. Lines 4
+and 5 check whether the write is exporting. If the source of the object is
+clean, we lift the transitive object closure to the shared heap and return the
+new location of the object in the shared heap.
+
+\subsubsection{Delaying writes}
+
+If the source of an exporting write is not clean, we suspend the current thread
+and switch to another thread in our scheduler. The source of the write is added
+to a queue of objects that are waiting to be lifted. Since the write is not
+performed, no forwarded pointers are created. If programs have ample amounts of
+concurrency, there will be other threads that are waiting to be run.  However,
+if all threads on a given core are blocked on a write, we move all of the
+object closures that are waiting to be lifted to the shared heap. We then force
+a local garbage collection, which will, as a part of the collection, fix all of
+the references to point to the new (lifted) location on the shared heap. Thus,
+the mutator never encounters a reference to a forwarded object. \\
+
+\subsubsection{Lifting objects to the shared heap}
+
+\begin{figure}
+\begin{lstlisting}
+Set imSet;
+void liftHelper (pointer* op, pointer* frontierP) {
+  frontier = *frontierP;
+  o = *op;
+  if (isInSharedHeap(o)) return;
+  copyObject (o, frontier);
+  *op = frontier + headerSize(o);
+  *frontierP = frontier + objectSize(o);
+  if (isMutable(o)) { setHeader(o, FORWARDED); *o = *op; }
+  else imSet += o;
+}
+
+pointer lift (pointer op, bool isLocalMany) {
+  start = frontier = getSharedHeapFrontier();
+  imSet = {};
+  //Lift transitive object closure
+  liftHelper (&op, &frontier);
+  foreachObjptrInRange (start, &frontier, liftHelper);
+  setSharedHeapFrontier(frontier);
+  //Fix forwarding pointers
+  foreachObjptrInObject (getCurrentStack(), fixFwdPtr);
+  foreach o in imSet { foreachObjptrInObject(o, fixFwdPtr); }
+  frontier = getLocalHeapFrontier();
+  if (isLocalMany)
+    foreachObjptrInRange(getSessionStart(),&frontier,fixFwdPtr);
+  setSessionStart(frontier);
+  return op;
+}
+\end{lstlisting}
+\caption{Lifting an object closure to the shared heap.}
+\label{code:lift}
+\end{figure}
+
+
+Figure~\ref{code:lift} shows the pseudo-C code for lifting object closures to
+the shared heap. The function \cf{lift} takes as input the root of a clean
+object closure and a Boolean representing whether the object closure has any
+object that has \cf{LOCAL\_MANY} references. For simplicity of presentation, we
+assume that the shared heap has enough space reserved for the transitive object
+closure of the object being lifted. In practice, the lifting process requests
+additional shared heap chunks to be reserved for the current processor, or
+triggers a shared heap collection if there is no additional space in the shared
+heap.
+
+Objects are transitively lifted to the shared heap, starting from the root, in
+the obvious way (Lines 17--18). As a part of lifting, mutable objects are
+lifted and a forwarding pointer is created in their original location, while
+immutable objects are copied and their location added to \cf{imSet} (Lines
+9--10). After lifting the transitive object closure to the shared heap, the
+shared heap frontier is updated to the new location.
+
+After object lifting, the current stack is walked to fix any references to
+forwarding pointers (Line 22). Since we do not track references from the stack
+for reference counting, there might be references to forwarded objects from
+stacks other than the current stack. We fix such references lazily. Before a
+context switch, the target stack is walked to fix any references to forwarded
+objects. Since immutable objects are copied and mutable objects lifted, a
+copied immutable object might point to a forwarded object. We walk all the
+shared heap copies of immutable objects lifted from the local heap to fix any
+references to forwarded objects (Lines 22).
+
+Recall that if the object closure was clean, but has \cf{LOCAL\_MANY}
+references, then it has at least one pointer from the current session. Hence,
+in this case, we walk the current session to fix the references to any
+forwarded objects to point to their shared heap counterparts (lines 24--25).
+Finally, session start is moved to the current frontier.
+
+\subsubsection{Remote spawns}
+\label{sec:remote_spawns}
+
+\begin{figure}
+\begin{lstlisting}
+ThreadID spawn (pointer closure, int target) {
+  ThreadID tid = newThreadID();
+  Thread t = newThread(closure, tid);
+  isLocalMany = false;
+  if (isClean(t, &isLocalMany)) {
+    t = lift(t, isLocalMany);
+    enqueThread(t, target);
+  }
+  else
+    liftAndReadyBeforeGC(t, target);
+  return tid;
+}
+\end{lstlisting}
+\caption{Spawning a thread.}
+\label{code:spawn}
+\end{figure}
+
+Apart from exporting writes, function closures can also escape local heaps when
+threads are spawned on other cores. For spawning on other cores, the
+environment of the function closure is lifted to the shared heap and then, the
+function closure is added to the target core's scheduler. This might introduce
+references to forwarding pointers in the spawning core's heap. We utilize the
+techniques developed for exporting writes to handle remote spawns in a similar
+fashion.
+
+Figure~\ref{code:spawn} shows the implementation of thread spawn. If the
+function closure is clean, we lift the function closure to the shared heap, and
+enqueue the thread on the target scheduler. Otherwise, we add it to the list of
+threads that need to be lifted to the shared heap. Before the next garbage
+collection, these function closures are lifted to the shared heap, enqueued to
+target schedulers, and the references to forwarded objects are fixed as a part
+of the collection. When the target scheduler finds this new thread (as opposed
+to other preempted threads), it allocates a new stack in the local heap. Hence,
+except for the environment of the remotely spawned thread, all data allocated
+by the thread is placed in the local heap.
+
+\subsubsection{Barrier implementation}
+
+In our local collector, the code for tracking cleanliness (Lines 13--24 in
+Figure~\ref{code:writeBarrier}) is implemented as an RSSA pass. In RSSA, we are
+able to distinguish heap allocated objects from non-heap values such as
+constants, values on the stack and registers, globals, etc. This allows us to
+generate barriers only when necessary.
+
+The code for avoiding creation of references to forwarded objects (Lines 4--11
+in Figure~\ref{code:writeBarrier}) is implemented in the primitive library,
+where we have access to the lightweight thread scheduler.
+\cf{suspendTillGCAndLift} (line 10 in Figure~\ref{code:writeBarrier}) is
+carefully implemented to not contain an exporting write, which would cause
+non-terminating recursive calls to the write barrier.
+
+\section{Integrating Software-Managed Cache Coherence (\smc)}
+
+In our next \MMSCC design, we integrate the SCC specific features into the
+runtime system. Specifically, we describe a new GC design that integrates
+software-managed cache coherence (SMC) capability, and utilizing the
+message-passing buffers for inter-core communication. The key enabling feature
+in both cases is the fact that Standard ML is a mostly functional language, and
+\MM's ability to discriminate objects at runtime based on the mutability
+information.
+
+\begin{figure}
+\centering
+\includegraphics[width=1\textwidth]{Figures/SMC_Collector.pdf}
+\caption{Heap design utilizing SCC's software-managed cache coherence capability.}
+\label{fig:smc}
+\end{figure}
+
+\subsection{Heap design}
+
+The heap design for taking advantage of SMC is given in Figure~\ref{fig:smc}.
+The design is similar to the local collector design (Section~\ref{sec:lc}) with
+one key difference.  Instead of a single uncached shared heap, we split our
+shared heap into cached and uncached partitions. We take advantage of the fact
+that standard ML can statically distinguish between mutable and immutable
+objects. Since immutable objects by definition will not change after
+initialization, we enable caching on one of the shared heaps into which only
+globalized immutable objects will be allocated. We call this heap a cached
+shared heap (CSH). Since most objects in standard ML are immutable, we gain the
+advantage of caching by placing these objects in CSH while not having to deal
+with coherence issues. CSH is implemented using Software Managed Coherence
+(SMC) for SCC~\cite{SMC}, and we mark CSH as a MPB type area such that any
+cache line from CSH will be tagged as MPB type. The CSH cached data bypasses L2
+and caching operates in a write-through mode.
+
+Caching is disabled in the uncached shared heap (USH) into which globalized
+mutable objects are allocated. By disabling caching, we circumvent the
+coherence issues at the cost of performance. A local heap object being
+globalized might contain both mutable and immutable objects in its transitive
+object closure. Hence, globalization might involve allocating new objects in
+both partitions of the shared heap. For the same reason, pointers are allowed
+between the two partitions of the shared heap.
+
+\subsection{Memory Consistency}
+
+The key challenge now is to ensure that the updates to CSH are visible to all
+the cores. Since CSH is cached, and SCC does not provide hardware cache
+coherence, explicit cache invalidations and flushes must be implemented.
+Moreover, any missed flushes or invalidations will lead to incoherent caches,
+while frequent flushes or invalidations leads to poor performance. The key
+observation is that the baseline local collector design has both read and write
+barriers; our idea is to integrate the cache control primitives into the memory
+barriers.
+
+\begin{figure}
+\begin{lstlisting}
+pointer readBarrier (pointer p) {
+  if (!isPointer(p)) return p;
+  if (getHeader(p) == FORWARDED) {
+		/* Address in shared heap */
+    p = *(pointer*)p;
+		if (p > MAX_CSH_ADDR) {
+			/* Address in cached shared heap, and has not
+			 * been seen so far. Fetch the updates. */
+			smcAcquire();
+			MAX_CSH_ADDR = p;
+		}
+	}
+  return p;
+}
+\end{lstlisting}
+\caption{Read barrier with software-managed cache coherence capability.}
+\label{code:read_barrier_smc}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+val writeBarrier (Ref r, Val v) {
+  if (isObjptr(v) &&
+			isInSharedHeap(r) &&
+			isInLocalHeap(v)) {
+			/* Move transitive object closure to shared
+			 * heap, and install forwarding pointers */
+			v = globalize (v);
+			/* Publish the updates */
+			smcRelease();
+	}
+	return v;
+}
+\end{lstlisting}
+\caption{Write barrier with software-managed cache coherence capability.}
+\label{code:write_barrier_smc}
+\end{figure}
+
+
+The CSH is always mapped to an address that is greater than the starting
+address of the USH. Each core maintains the largest address seen in CSH in the
+\cf{MAX\_CSH\_ADDR} variable. During an object read, if the address of the
+object lies in the shared heap and is greater than \cf{MAX\_CSH\_ADDR}, we
+invalidate any cache lines that might be associated with CSH by invoking
+\texttt{smcAcquire()} (Line 9 in Figure~\ref{code:read_barrier_smc}). This
+ensures that the values read are not stale. We update the \cf{MAX\_CSH\_ADDR}
+if necessary. Since the objects in CSH are immutable, there is no need to
+perform cache invalidation while reading an address that is less than
+\cf{MAX\_CSH\_ADDR}. Additionally, after garbage collection,
+\cf{MAX\_CSH\_ADDR} is set to point to the start of the CSH.
+
+Similarly, whenever an object is globalized to the CSH, we must ensure that the
+updates are visible to all of the cores. After an exporting write, we invoke
+\texttt{smcRelease()}, to flush any outstanding writes to the memory (Line 9 in
+Figure~\ref{code:write_barrier_smc}).
+
+\subsection{Mapping channel communication over message-passing buffers}
+
+In this section, we describe how we map the \MM communication model on top of
+the MPB. The main challenge here is the compatibility between the \MM
+communication model and the capabilities of MPB. In \MM, threads communicate
+over first-class channels, which support many-to-many communication pattern.
+Hence, a receiver does not know the identity of the sender and vice versa.
+Moreover, if a receiver is not available, the sender thread blocks; it is
+descheduled, and some other thread from the scheduler queue continues execution
+on that core. Moreover, the values sent over the channels in \MM can be
+mutable. The channel itself is simply a data structure implemented over shared
+memory. However, the communication on the SCC over libraries such as RCCE and
+RCKMPI is optimized for SPMD programming model, where the sender and the
+receiver know each other's identities, and are expected to arrive at the
+communicaiton point at the same time. Hence, considering the fact that MPB
+memory is on 8KB, both RCCE and RCKMPI use busy waiting strategy for intercore
+communication. Thus, careful design is needed to map \MM communication
+abstraction over the MPB.
+
+Our channel mapping implementation exploits both the cached shared heap and MPB
+for efficient inter-core message passing. We take advantage of our heap layout
+and the availability of static type information to take advantage of the fast,
+on-die MPB memory. We consider the following five cases:
+
+\begin{enumerate}
+\item Channel is located in the local heap
+\item Channel is located in the shared heap, and the message being sent is an
+unboxed value
+\item Channel is located in the shared heap, the message is in the local heap,
+and at least one of the objects in the transitive closure of the message being
+sent is mutable
+\item Channel is located in the shared heap, the message is in the local heap,
+and all objects in the transitive closure of the message being sent are
+immutable
+\item Channel and the message are located in the shared heap
+\end{enumerate}
+
+For case 1, we observe that only channels that are located in the shared heap
+can be used for inter-core communication. Our heap invariants prevent pointers
+from one local heap to another. Thus, if a channel is located in the local
+heap, then no thread on the other cores have a reference to this channel. Thus,
+communication under case 1 only involves a value or a pointer exchange between
+the communicating lightweight threads.
+
+MultiMLton supports unboxed types that represent raw values. Hence, under case
+2, we add a reference to the thread along with the value being sent to the
+channel. In addition, we add a reference to the blocked thread to the
+remembered list so that the local garbage collection can trace it.
+
+\begin{figure}
+\centering
+\includegraphics[width=1\textwidth]{Figures/Comm_Case_3}
+\caption{Steps involved in sending an mutable object \cf{a} by thread \cf{T1}
+on a shared heap channel \cf{C}, which is eventually received by thread
+\cf{T2}.}
+\label{fig:comm_mutable}
+\end{figure}
+
+If the message being sent has a mutable object in the transitive closure, we
+must make this object visible to both the sender and the receiver core.
+Figure~\ref{fig:comm_mutable} shows the case where a thread \cf{T1} sends a
+mutable object \cf{a} on a shared heap channel \cf{C}. In this case, we eagerly
+globalize \cf{a} before \cf{T1} blocks. Since the message is already in the
+shared heap, when the receiver thread \cf{T2} eventually arrives, it just picks
+up a pointer to the message in the shared heap.
+
+\begin{figure}
+\centering
+\includegraphics[width=1\textwidth]{Figures/Comm_Case_4}
+\caption{Steps involved in sending an immutable object \cf{a} by thread \cf{T1}
+on a shared heap channel \cf{C}, which is eventually received by thread
+\cf{T2}.}
+\label{fig:comm_immutable}
+\end{figure}
+
+Figure~\ref{fig:comm_immutable} shows the case where a thread \cf{T1} sends an
+immutable object \cf{a} on a shared channel \cf{C}. Here, we simply add to the
+channel \cf{C}, a reference to the message \cf{a} in the local heap, along with
+the reference to the thread \cf{T1}. In addition, a reference to the object
+\cf{a} is added to the remembered list, so that a local garbage collection will
+be able to identify \cf{a} as being alive.
+
+Afterward, when the receiver thread \cf{T2} arrives and finds the message not to
+be in the shared heap, it sends an inter-core interrupt to the core on which the
+message is located (core 0, in this case). After this message transfer is
+initiated over the MPB using RCCE to transfer the object \cf{a} from core 0 to
+core 1. Since Standard ML immutable objects do not have identity, making a copy
+of the immutable object is safe under MultiMLton.
+
+If the channel and the message are located in the shared heap, communication
+only involves a value or a pointer exchange. This case is similar to case 1.

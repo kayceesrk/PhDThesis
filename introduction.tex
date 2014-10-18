@@ -245,17 +245,16 @@ programs written for cache coherent architectures to efficiently run on non
 cache coherent architectures, while transparently mapping the source language
 structures and mechanisms on to the architecture's capabilities.
 
-Our initial system design utilizes a split-heap memory manager
-design~\cite{}, optimized for the SCC's memory hierarchy, to obtain a \MM
-system on the SCC. This design however incorporates both read and write
-barriers, and we identify that the cost of read barriers under \MM programming
-model is significant. To alleviate this, we design a novel thread local
-collector that utilizes ample concurrency in the programming model as a
-resource along with a dynamic shape analysis to eliminate the read barriers.
-Our final runtime design transparently utilizes SCC's support for software
-managed cache coherence and on-die message-passing interconnect to achieve an
-efficient implementation under which 99\% of the memory accesses can
-potentially be cached.
+Our initial system design utilizes a split-heap memory manager design~\cite{},
+optimized for the SCC's memory hierarchy, to obtain a \MM system on the SCC.
+This design however incorporates both read and write barriers, and we identify
+that the cost of read barriers under \MM programming model is significant. To
+alleviate this, we design a novel thread local collector that utilizes ample
+concurrency in the programming model as a resource along with a dynamic shape
+analysis to eliminate the read barriers. Our final runtime design transparently
+utilizes SCC's support for software managed cache coherence and on-die
+message-passing interconnect to achieve an efficient implementation under which
+99\% of the memory accesses can potentially be cached.
 
 \subsection{A prescription for safely relaxing synchrony}
 
