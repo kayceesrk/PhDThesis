@@ -70,3 +70,176 @@ breakatwhitespace=false,        % sets if automatic breaks should only happen at
 commentstyle=\itshape\color{MidnightBlue},
 %escapeinside={\%*}{*)},         % if you want to add a comment within your code
 }
+
+\font\ninett=cmtt8
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% General
+\font\nine=cmr9
+
+\font\ninerm=cmr9
+\font\ninebf=cmbx9
+\font\nineit=cmti9
+\font\ninesl=cmsl9
+\font\ninett=cmtt9
+\font\ninemi=cmmi9  \skewchar\ninemi='177
+\font\ninesy=cmsy9  \skewchar\ninesy='60
+\font\nineex=cmex10
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%% Math Fonts
+
+\font\mathninerm=cmr9
+\font\mathninei=cmmi9
+\font\mathninesy=cmsy9
+
+
+\def\ninepoint{\def\rm{\fam0\ninerm}%
+\textfont0=\mathninerm\scriptfont0=\mathsevenrm\scriptscriptfont0=\mathfiverm%
+\textfont1=\mathninei\scriptfont1=\mathseveni\scriptscriptfont1=\mathfivei%
+\textfont2=\mathninesy\scriptfont2=\mathsevensy\scriptscriptfont2=\mathfivesy%
+\textfont3=\tenex
+\let\sc=\sevenrm
+ \def\it{\fam\itfam\nineit}%
+  \textfont\itfam=\nineit
+  \def\bf{\fam\bffam\ninebf}%
+  \textfont\bffam=\ninebf
+  \def\tt{\fam\ttfam\ninett}%
+  \textfont\ttfam=\ninett
+  \setbox\strutbox=\hbox{\vrule height9pt depth4pt width0pt}%
+  \baselineskip=11pt\rm}
+
+
+\newenvironment{boxit}{\vbox\bgroup\hrule\hbox\bgroup\vrule\kern3pt
+    \vbox\bgroup\kern3pt\advance\hsize by -6.8pt\relax}{\par\kern3pt\egroup\kern3pt\vrule\egroup\hrule\egroup}
+
+\font\matheightrm=cmr8
+\font\matheightbf=cmbx8
+\font\matheighti=cmmi8
+\font\matheightsy=cmsy8
+\font\eightit=cmti8
+\font\eighttt=cmtt8
+
+
+
+\def\eightpoint{%
+\textfont0=\matheightrm%
+\scriptfont0=\mathsixrm\scriptscriptfont0=\mathfiverm
+\textfont1=\matheighti\scriptfont1=\mathsixi\scriptscriptfont1=\mathfivei%
+\textfont2=\matheightsy\scriptfont2=\mathsixsy\scriptscriptfont2=\mathfivesy%
+\def\rm{\fam0\matheightrm}%
+\def\it{\fam\itfam\eightit}%
+\textfont\itfam=\eightit%
+  \def\bf{\fam\bffam\matheightbf}%
+  \textfont\bffam=\matheightbf%
+  \def\tt{\fam\ttfam\eighttt}%
+  \textfont\ttfam=\eighttt%
+  \setbox\strutbox=\hbox{\vrule height7pt depth2pt width0pt}%
+ \baselineskip=9pt\rm}
+
+
+\lstdefinestyle{numbers}
+{numbers=left, stepnumber=1, numberstyle=\tiny, numbersep=10pt}
+
+\lstset{
+   basicstyle=\small\tt, % print whole listing small
+   language = ML,
+   numberstyle=\small,
+   style = numbers,
+   keywordstyle=\bf,
+   %morekeywords={spawn,send,recv,map,reify,attach,inflate,prepare,spawnParasite,sync},
+   showstringspaces=false} % no special string spaces
+
+\newfam\smallttfam
+
+
+\newcommand{\codecf}{\ninett\fam\smallttfam}
+
+\newcount\typett
+
+\def\startdisplay#1
+  {\bgroup\catcode`\`=\active\obeyspaces\obeylines
+     \def\i##1{{\it ##1}}
+     \def\c##1{{\cf ##1}}
+     \setlength{\topsep}{0in}
+     \setlength{\partopsep}{0in}
+     \setlength{\itemsep}{0in}
+     \setlength{\parsep}{0in}
+     \setlength{\leftmargin}{6.5em}
+     \setlength{\rightmargin}{0in}
+     \setlength{\itemindent}{0in}
+     \baselineskip=9pt
+     \codecf\tt\small
+     \parskip=0pt plus 1pt\medskip\ifnum\typett>0 \codecf\else\it\fi\penalty7000}
+
+
+\global\def\enddisp{\egroup\catcode`\^^M=5}
+ {\obeyspaces\global\let \ }
+
+\newenvironment{code}{\typett=1\startdisplay}{\enddisp}
+\newenvironment{display}{\typett=0\startdisplay}{\enddisp}
+
+\newcommand{\parConcat}{~\triangleleft~}
+\renewcommand{\k}[1]{\mathtt{#1}}
+\newcommand{\I}[1]{\mathit{#1}}
+\newcommand{\control}[4]{\langle #1, #2, #3, #4\rangle}
+\newcommand{\cont}[3]{\langle #1:#2 \parConcat #3 \rangle}
+\newcommand{\kbar}[1]{\overline{\k{#1}}}
+\newcommand{\lframe}[2]{\mathit{#1}\lceil #2 \rceil}
+\newcommand{\lam}[2]{\lambda\,#1.#2}
+\newcommand{\ThreadMap}{{\cal T}}
+\newcommand{\ChannelMap}{{\cal C}}
+\newcommand{\R}{{\cal R}}
+\newcommand{\threads}[2]{\ThreadMap[#1 \mapsto #2]}
+\newcommand{\channels}[2]{\ChannelMap[#1 \mapsto #2]}
+\newcommand{\spawn}[1]{\k{spawnHost}(#1)}
+\newcommand{\async}[1]{\k{spawnParasite}(#1)}
+\newcommand{\infl}[1]{\k{inflate}(#1)}
+\newcommand{\reif}[1]{\k{reify}(#1)}
+\newcommand{\unit}{\k{unit}}
+\newcommand{\fresh}[1]{#1\; \I{fresh}}
+\newcommand{\RULE}[2]{\frac{\begin{array}{c}#1\end{array}}{
+                            \begin{array}{c}#2\end{array}}}
+\newcommand{\send}[2]{\k{send}(#1,#2)}
+\newcommand{\recv}[1]{\k{recv}(#1)}
+\newcommand{\mkCh}{\k{chan()}}
+\newcommand{\ALT}{~\mid~}
+\setlength{\parindent}{8pt}
+\setlength{\parskip}{\smallskipamount}
+
+\newenvironment{nop}{}{}
+% Math mode
+\newenvironment{ldisplaymath}{
+\par\noindent\begin{nop}\large\begin{displaymath}}{
+\end{displaymath}\end{nop}\ignorespacesafterend}
+\newenvironment{ndisplaymath}{
+\par\noindent\begin{nop}\normalsize\begin{displaymath}}{
+\end{displaymath}\end{nop}\ignorespacesafterend}
+\newenvironment{sdisplaymath}{
+\par\noindent\begin{nop}\small\begin{displaymath}}{
+\end{displaymath}\end{nop}\ignorespacesafterend}
+\newenvironment{fdisplaymath}{
+\par\noindent\begin{nop}\footnotesize\begin{displaymath}}{
+\end{displaymath}\end{nop}\ignorespacesafterend}
+\newenvironment{lmathpar}{
+\begin{nop}\large\begin{mathpar}}{
+\end{mathpar}\end{nop}\ignorespacesafterend}
+\newenvironment{nmathpar}{
+\begin{nop}\normalsize\begin{mathpar}}{
+\end{mathpar}\end{nop}\ignorespacesafterend}
+\newenvironment{smathpar}{
+\begin{nop}\small\begin{mathpar}}{
+\end{mathpar}\end{nop}\ignorespacesafterend}
+\newenvironment{fmathpar}{
+\begin{nop}\footnotesize\begin{mathpar}}{
+\end{mathpar}\end{nop}\ignorespacesafterend}
+\newenvironment{alignS}{
+\par\noindent\begin{nop}\begin{align}}{
+\end{align}\end{nop}\ignorespacesafterend}
+\newenvironment{salignS}{
+\par\noindent\begin{nop}\small\begin{align}}{
+\end{align}\end{nop}\ignorespacesafterend}
+\newenvironment{falignS}{
+\par\noindent\begin{nop}\footnotesize\begin{align*}}{
+\end{align}\end{nop}\ignorespacesafterend}
+\newcommand{\mfbox}[1]{\fbox{${#1}$}}

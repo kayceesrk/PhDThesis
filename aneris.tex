@@ -6,19 +6,30 @@
 \newcommand{\kram}{k_{ram}}
 
 \chapter{\MMSCC: A Coherent and Managed Runtime for ML on the SCC}
+\label{chap:aneris}
 
 In this chapter, we describe \MMSCC, an extension of \MM that provides a
 coherent address space on the SCC, optimizing for the SCC's memory hierarchy.
-We begin with a thread-local garbage collector (\lc) design~\cite{} that
-partitions the heap into local heaps on each core and a shared heap for
-cross-core communication. However, we observe that the cost of memory barriers
-utilized in preserving the heap invariants have significant costs. To
-eliminitate theses costs, we propose a new GC design (\ta) that utilizes the
-ample concurrency offered by our programming model combined with a dynamic
-shape analysis to eliminate some of the GC overheads. Our final design (\smc)
-integrates SCC's support for software-managed cache coherence into the extant
-memory barriers to improve the design further.
-
+We begin with a \emph{local collector}\footnote{Other terms have been used in
+the literature to indicate similar heap designs, notably private nursery, local
+heap collector, thread-local or thread-specific heap, and on-the-fly
+collection.} (\lc) design~\cite{} that partitions the heap into local heaps on
+each core and a shared heap for cross-core communication. However, we observe
+that the cost of memory barriers utilized in preserving the heap invariants
+have significant costs. To eliminitate theses costs, we propose a new GC design
+(\ta) that utilizes the ample concurrency offered by our programming model
+combined with a dynamic shape analysis to eliminate some of the GC overheads.
+This naturally leads to a GC design that focuses on
+\emph{procrastination}~\cite{mmgc}, delaying writes that would necessitate
+establishing forwarding pointers until a GC, where there is no longer a need
+for such pointers. The GC leverages the mostly functional nature of ACML
+programs and a new object property called \emph{cleanliness}, which enables a
+broad class of objects to be moved from a local to a shared heap without
+requiring a full traversal of the local heap to fix existing references;
+cleanliness enables an important optimization that achieves the effect of
+procrastination without actually having to initiate a thread stall. Our final
+design (\smc) integrates SCC's support for software-managed cache coherence
+into the extant memory barriers to improve the design further.
 
 We begin by discussing in detail the architecture and programming model of the
 SCC, which serves as our prototype non cache coherent architecture. However,
@@ -55,9 +66,10 @@ specifications~\cite{Mattson2010}, the read latencies in this architecure are:
 
 \begin{mathpar}
 \begin{array}{rcl}
-\R{LocalMPB} & = & 45~\kcore + 8~\kmesh \\
-\R{RemoteMPB} & = & 45~\kcore + 4*n*2~\kmesh \\
-\R{DRAM} & = & 40~\kcore + 4*n*2~\kmesh + 46~\kram \\
+\textrm{LocalMPB} & = & 45~\kcore + 8~\kmesh \\
+\textrm{RemoteMPB} & = & 45~\kcore + 4*n*2~\kmesh \\
+\textrm{DRAM} & = & 40~\kcore + 4*n*2~\kmesh + 46~\kram
+\end{array}
 \end{mathpar}
 
 \noindent where $\kcore$, $\kmesh$ and $\kram$ are the cycles of core, mesh
@@ -110,3 +122,22 @@ MPBs for small messages (less than 8KB --- the maximum message size that would
 fully fit in the MPB) and the DRAM for larger messages. Despite having a higher
 bandwidth and lower latency, the synchronization costs involved in transferring
 a large multi-part message over the MPB overweighs the benefits.
+
+\section{Local collector design}
+
+Splitting a program heap among a set of cores is a useful technique to exploit
+available parallelism on scalable multicore platforms: each core can allocate,
+collect, and access data locally, moving objects to a global, shared heap only
+when they are accessed by threads executing on different cores. This design
+allows local heaps to be collected independently, with coordination required
+only for global heap collection. In contrast, stop-the-world collectors need a
+global synchronization for every collection.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.75]{Figures/LocalCollector.pdf}
+\caption{Local collector heap organization for the SCC}
+\label{fig:lc}
+\end{figure}
+
+Our local collector design for the SCC is shown in Figure~\ref{fig:lc}.
