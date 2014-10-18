@@ -1,0 +1,9 @@
+#Benchmark SCC Error
+AllPairs 22.42	1.2
+BarnesHut 8.64	0.9
+Countgraphs 17.23	1.3
+GameOfLife 14.31	1.3
+Kclustering 21.12	1.1
+Mandelbrot 6.9	1
+Nucleic 17.23	0.9
+Raytrace 14.23	0.3

@@ -253,7 +253,10 @@ Instead, \MM builds a preemptive, priority supported, run-queue based,
 multicore-capable scheduler using \cf{MLton.Thread}. Building multicore
 schedulers over continuations in this way is not new, first described by Wand
 et al.~\cite{ContMP}, and successfully emulated by a number of modern language
-implementations~\cite{ghc,Auhagen11}.
+implementations~\cite{ghc,Auhagen11}. Each core has a private scheduler queue,
+and new threads are by default spawned on the same core. The programmer can
+explicitly request for a thread to be spawned on a different core. However,
+once spawned, the threads remain pinned to their cores.
 
 Implementing \MM's threading system over one-shot continuation as opposed to
 full-fledged (multi-shot) continuations greatly reduces the cost of the thread
@@ -334,6 +337,7 @@ Further details aout parasitic threads including its operational semantics and
 mapping of \acml primitives to parasitic threads can be found in~\cite{JFP14}.
 
 \subsection{Garbage collector}
+\label{sec:gc}
 
 \MM garbage collector (GC) is optimized for throughput. It uses a single,
 contiguous heap, shared among all the cores, with support for local allocation
