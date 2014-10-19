@@ -81,8 +81,8 @@ def main ():
 			plt.axes().set_yscale ("linear")
 
 		plt.subplots_adjust (bottom=0.12)
-		plt.plot (prcx, prcy, nodeKind [0], label="PRC", linewidth=2.0, ms=15)
-		plt.plot (lcx, lcy, nodeKind [1], label="LC", linewidth=2.0, ms=15)
+		plt.plot (lcx, lcy, nodeKind [0], label="LC", linewidth=2.0, ms=15)
+		plt.plot (prcx, prcy, nodeKind [1], label="PRC", linewidth=2.0, ms=15)
 		plt.plot (smcx, smcy, nodeKind [2], label="SMC", linewidth=2.0, ms=15)
 
 		plt.xlim(xmin = 0)

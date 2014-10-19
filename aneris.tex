@@ -377,7 +377,7 @@ time executing read barriers for our benchmarks.
 
 \begin{table}
 \begin{center}
-\begin{tabular} {l r r}
+\begin{tabular} {|l|r|r|}
 \hline
 {\bf Benchmark} & {\bf RB invocations ($\times 10^6$)} & {\bf Forwarded}\\
 \hline
@@ -1100,5 +1100,139 @@ experimental setup is only around 70 MB/s.
   \label{fig:time}
 \end{figure}
 
-Figurue~\ref{fig:time} presents the speedup results and illustrates space-time trade-offs critical for any
-garbage collector evaluation.
+Figurue~\ref{fig:time} presents the speedup results and illustrates space-time
+trade-offs critical for any garbage collector evaluation. Among the three
+variants, SMC performs the best (Figure~\ref{fig:speedup}) due to the fact that
+most of the accesses under SMC is cached, unlike LC and PRC. We also see that
+the performance of LC and PRC start to flatten out due to the contention on the
+uncached shared memory as we increase the number of cores. Thus, with
+increasing number of cores, the uncached shared memory becomes the bottleneck.
+
+As we decrease the overall heap size, we see that the programs take longer to
+run, due to the more frequent GCs (Figure~\ref{fig:time_SCC}). The reduction in
+heap size, by definition, does not adversely affect the mutator time when
+compared with the GC time. At 3$\times$ the minimum heap size under which the
+programs would run, PRC is 17\% faster than LC, and SMC is 18\% faster than
+PRC. Overall, SMC is 32\% faster than LC.
+
+The mutator time (Figure~\ref{fig:mutator_time_scc}) of LC is consistently
+higher than PRC due to the elimination of read barrier overheads under PRC.
+Although SMC does have read barrier overheads, caching much of the shared
+memory accesses keeps the mutator time low. We instrumented our read and write
+barriers to classify the memory accesses. On average, across all of the
+benchmarks, 89\% of the read or write requests were to the local heap, which is
+private and is cached both in L1 and L2. This is common to all three versions
+of the local collector. Thus, SMC derives mutator gains by caching much of the
+11\% of the GC requests.
+
+Out of the shared heap memory requests, on average, 93\% of all requests were
+to the cached shared heap. However, it should be noted that cached shared heap
+data bypass L2, and are only cached in the comparatively smaller L1 cache.
+Hence, the benefit of caching shared heap data, as far as the mutator is
+concerned, may not be dramatic if the cached shared heap reads are far and few
+between. In any case, with SMC, less than 1\% of mutator accesses were to the
+uncached memory. Thus, SMC is able to potentially cache more than 99\% of
+memory accesses.
+
+There is very little difference between the GC times
+(Figure~\ref{fig:gc_time_SCC}) between LC and PRC. This is because both the
+variants are similar in terms of the actual GC work. However, SMC's GC time
+tends to be lower since part of the expensive shared heap collection itself is
+cached. Thus, software-managed cache coherence not only benefits the mutator
+but also the garbage collector.
+
+\subsection{Evaluating Procrastinating Collector}
+
+In this section, we will focus on the procrastinating collector (PRC) design,
+and analyze the impact of different optimizations.
+
+\subsubsection{Impact of cleanliness}
+\label{sec:impact_cleanliness}
+
+Cleanliness information allows the runtime system to avoid preempting threads
+on a write barrier when the source of an exporting write is clean. In order to
+study the impact of cleanliness, we removed the reference counting code and
+cleanliness check from the write barrier; thus, every exporting write results
+in a thread preemption and stall. The results presented here were taken with
+programs running on 48-cores.
+
+\begin{table}
+\begin{center}
+\begin{tabular} {|l|r|r|r|}
+\hline
+{\bf Benchmark} & {\bf PRC} & {\bf PRC MU-} & {\bf PRC CL-} \\
+\hline
+AllPairs 		& 604 \ci{42}		&	616 \ci{43}			&	28573 \ci{1429} \\
+BarnesHut 	& 8376 \ci{503}	&	82284 \ci{3291}	& 23504887 \ci{1175244} \\
+CountGraphs & 45 \ci{2}			&	64 \ci{2}				& 17061 \ci{1194} \\
+GameOfLife 	& 11973 \ci{359} &	238462 \ci{16692}	& 1936250 \ci{58088} \\
+KClustering & 7227 \ci{217}	& 15394 \ci{616}	& 8107173 \ci{405359} \\
+Mandelbrot 	& 44 \ci{2}			& 84 \ci{5}				& 5863 \ci{235} \\
+Nucleic 		& 58 \ci{3}			& 104594 \ci{4184}	&	209840 \ci{14689} \\
+Raytrace 		& 881 \ci{35}		& 973 \ci{39}			& 13464 \ci{404} \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Average number of preemptions on write barrier, along with 95\% confidence intervals.}
+\label{tab:preempt}
+\end{table}
+
+Table~\ref{tab:preempt} shows the number of preemptions on write barrier for
+different configurations. PRC represents the variant with all of the features
+enabled; PRC MU- shows a cleanliness optimization that does not take an
+object's mutability into consideration in determining cleanliness (using only
+recorded reference counts instead), and PRC CL- represents preemptions incurred
+when the collector does not use any cleanliness information at all. Without
+cleanliness, on average, the programs perform substantially more preemptions
+when encountering a write barrier.
+
+Recall that if all of the threads belonging to a core get preempted on a write
+barrier, a local major GC is \emph{forced}, which lifts all of the sources of
+exporting writes, fixes the references to forwarding pointers and unblocks the
+stalled threads. Hence, an increase in the number of preemptions leads to an
+increase in the number of local collections.
+
+\begin{table}
+\begin{center}
+\begin{tabular} {|l|r|r|r|}
+\hline
+{\bf Benchmark} & {\bf PRC} & {\bf PRC MU-} & {\bf PRC CL-} \\
+\hline
+AllPairs & 0.08 \ci{0} & 0.08 \ci{0} & 38.55 \ci{2.31} \\
+BarnesHut & 0.17 \ci{0.01} & 19.2 \ci{0.96} & 100 \ci{3} \\
+CountGraphs & 0 \ci{0} & 0.03 \ci{0} & 0.18 \ci{0.01} \\
+GameOfLife & 3.54 \ci{0.21} & 9.47 \ci{0.47} & 99.75 \ci{4.99} \\
+KClustering & 0 \ci{0} & 0.02 \ci{0} & 21.64 \ci{1.08} \\
+Mandelbrot & 1.43 \ci{0.1} & 2.86 \ci{0.11} & 86.22 \ci{6.04} \\
+Nucleic & 0 \ci{0} & 9.37 \ci{0.28} & 19.3 \ci{0.58} \\
+Raytrace & 1.72 \ci{0.1} & 1.72 \ci{0.07} & 24.86 \ci{0.99} \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Average percentage of forced GCs out of the total number of local major GCs.}
+\label{tab:forcedGCs}
+\end{table}
+
+Table~\ref{tab:forcedGCs} shows the percentage of local major GCs that were
+forced compared to the total number of local major GCs. PRC CL- shows the
+percentage of forced GCs if cleanliness information is not used. On average,
+49\% of local major collection performed is due to forced GCs if cleanliness
+information is not used, whereas it is less than 1\% otherwise.  On benchmarks
+like {\tt BarnesHut}, {\tt GameOfLife} and {\tt Mandelbrot}, where all of the
+threads tend to operate on a shared global data structure, there are a large
+number of exporting writes. On such benchmarks almost all local GCs are forced
+in the absence of cleanliness. This adversely affects the running time of
+programs.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{Graphs/slowdown_cleanliness}
+	\caption{Impact of utilizing object mutability information and cleanliness
+	analysis on the performance of PRC.}
+  \label{fig:slowdown-cleanliness}
+\end{figure}
+
+Figure~\ref{fig:slowdown-cleanliness} shows the running time of programs
+without using cleanliness. On average, programs tend to run 28.2\% slower if
+cleanliness information is ignored. The results show that cleanliness analysis
+therefore plays a significant role in the PRC design.
