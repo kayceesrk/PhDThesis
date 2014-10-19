@@ -116,6 +116,7 @@ commentstyle=\itshape\color{MidnightBlue},
 \newcommand{\rulelabel}[1]{\textrm{\sc {[#1]}}}
 \newcommand{\RULE}[2]{\frac{\begin{array}{c}#1\end{array}}
                            {\begin{array}{c}#2\end{array}}}
+\newcommand{\RULEONE}[1]{{\begin{array}{c}#1\end{array}}}
 
 \newcommand{\OExec}[3]{\langle #1, #2 \rangle_{#3}}
 \newcommand{\ExecP}{\langle {\sf P}, \ActionSet,\po,\co \rangle}
@@ -123,9 +124,6 @@ commentstyle=\itshape\color{MidnightBlue},
 
 \newcommand{\trace}{\mathit{tr}}
 \newcommand{\commit}[2]{\epsilon_{(#1,#2)}}
-
-\newcommand{\name}{\ftextrecipe$^{\mbox{\tiny\sc CML}}$}
-
 
 \newcommand{\wf}[1]{{\sf WF}(#1)}
 \newcommand{\transOpAx}[2]{\opax(#1,#2)}
@@ -421,8 +419,8 @@ Consider the case where the value is distributed asynchronously. Assume that
 there are three participants: $p_1$, $p_2$, and $p_3$. Participant $p_1$ first
 types message \cf{X}, which is seen by $p_2$, who in turn types the message
 \cf{Y} after sending an acknowledgment. Since there is a causal order between
-the message {\codecf X} and {\codecf Y}, $p_3$ must see {\codecf X} followed by
-{\codecf Y}. Figure~\ref{fig:CS_asend_value} shows an execution where this is
+the message \cf{X} and \cf{Y}, $p_3$ must see \cf{X} followed by
+\cf{Y}. Figure~\ref{fig:CS_asend_value} shows an execution where this is
 not the case. In the figure, uninteresting messages have been elided for
 clarity. The key observation is that, due to asynchrony, message \cf{X} sent
 by the $p_1$ to $p_3$ might be \emph{in-flight}, while the causally dependent
@@ -543,6 +541,7 @@ communicated by a send action. Given a set of actions $\ActionSet \in
 $\ActionClass{x}$ represents one of the action classes defined above.
 
 \begin{definition}[Axiomatic Execution]
+\label{def:exec}
 An axiomatic execution is defined by the tuple $\E \coloneqq \Exec$ where:
 \begin{itemize}
 \item $\program$ is a program.
@@ -765,12 +764,6 @@ If a total order $\toto$ is consistent with $\hb$, then $\hb$ does not contain
 a cycle involving actions in $\ActionSet_{od}$.
 \end{lemma}
 
-%% \begin{proof}
-%% Assume $\alpha \hb \beta \hb \alpha$, then either $\alpha \toto \beta$ or
-%% $\beta \toto \alpha$. If $\alpha \toto \beta$, then pick $\beta \hb \alpha$ and
-%% show that $\toto$ is not consistent with $\hb$. Similarly for the other case.
-%% \end{proof}
-
 Next, we show that a well-formed axiomatic execution respects the safety
 property of non-speculative execution of a CML program. When a CML program
 evaluates non-speculatively, a thread performing a communication action is
@@ -847,8 +840,7 @@ t 						& \in & {\tt ThreadId}\\
 \begin{smathpar}
 \begin{array}{cl}
 
-\RULE
-{\\ }
+\RULEONE
 {\PrgState{(\lambda\,x.e) v}{\ActionSoup}
 \intertrans{\tau_t}
 \PrgState{e[x/v]}{\ActionSoup}} & \rulelabel{App} \\ \\
@@ -859,33 +851,27 @@ t 						& \in & {\tt ThreadId}\\
 \intertrans{\tau_t}
 \PrgState{c}{\ActionSoup}} & \rulelabel{Chan} \\ \\
 
-\RULE
-{\\
-}
+\RULEONE
 {\langle (t,\readyOp{e}) \;\|\; \threadsoup, \ActionSoup \rangle
  \intertrans{b_t}
  \langle (t,e) \;\|\; \threadsoup, \ActionSoup \rangle} & \rulelabel{Begin} \\ \\
 
-\RULE
-{}
+\RULEONE
 {\langle (t,v) \;\|\; \threadsoup,\ActionSoup \rangle
  \intertrans{e_t}
  \langle (t,\doneOp) \;\|\; \threadsoup, \ActionSoup \rangle} & \rulelabel{End} \\ \\
 
-\RULE
-{}
+\RULEONE
 {\PrgState{\spawn\,e}{\ActionSoup}
 \intertrans{f_t^it'}
 \langle (t,\opIntraState{t'}) \;\|\; (t',\readyOp{e}) \;\|\; \threadsoup, \ActionSoup \rangle} & \rulelabel{Spawn} \\ \\
 
-\RULE
-{}
+\RULEONE
 {\langle (t,\opIntraState{\join\,t'}) \;\|\; (t',\doneOp) \;\|\; \threadsoup, \ActionSoup \rangle
  \intertrans{j_t^it'}
  \langle (t,\opIntraState{\unit}) \;\|\; (t',\doneOp) \;\|\; \threadsoup, \ActionSoup \rangle} & \rulelabel{Join} \\ \\
 
-\RULE
-{\\}
+\RULEONE
 {\PrgState{\print\,v}{\ActionSoup} \intertrans{p_t^iv}
 \PrgState{\unit}{\ActionSoup}} & \rulelabel{Print} \\ \\
 
@@ -931,11 +917,13 @@ actions}. It evaluates the program according to the trace, by manipulating a
 asynchronously.  Informally, we can think of the trace as a history or log of
 actions we wish to perform; the machine either accepts the trace, if executing
 the actions found in the trace using the reduction rules leads to a CML
-execution (as defined by Definition~\ref{def:cml}), or gets stuck otherwise. An
-operational action $\alpha \in \ActionClass{op}$ is either:
+execution (as defined by Definition~\ref{def:cml}), or gets stuck otherwise.
+
+\begin{definition}[Operational Action]
+\label{def:op_act}
+An operational action $\alpha \in \ActionClass{op}$ is either:
 
 \begin{itemize}
-
 \item an action in $\ActionClass{} \setminus \ActionClass{r}$.
 \item a pair in $\ActionClass{r} \times \ActionClass{s}$ where each receive
 	action is paired up with the matching send action on the same channel,
@@ -946,8 +934,8 @@ operational action $\alpha \in \ActionClass{op}$ is either:
   Definition~\ref{def:well-formed}.  Intuitively, a well-formed machine
   state is one that could have been reached if all \cf{send} operations
   were executed synchronously.
-
 \end{itemize}
+\end{definition}
 
 \begin{definition}[Operational Execution]
 An operational execution is a pair $(\program,tr)$, where $\program$ is a
@@ -955,16 +943,16 @@ program and $tr \in \bar{\ActionClass{op}}$, and there are no duplicates in
 $tr$.
 \end{definition}
 
-The semantics used to interpret the trace is given in
-Figure~\ref{fig:op_semantics}.  The program state is composed of a tuple
-with $\threadsoup$ representing the pool of concurrently executing threads
-and a collection of unmatched send actions $\ActionSoup$. Each thread in
-$\threadsoup$ is a tuple with a thread id and a local state.  This state is
-either an initial state $\readyOp{e}$ containing the expression that will
-be evaluated by this thread, or a completed state $\doneOp$, or the
-expression being evaluated by this thread.  Each state transition is affixed
-with an action drawn from the trace that is used by the machine to determine
-which rule to apply, as we describe below.
+The operational semantics of the machine used to interpret the trace is given
+in Figure~\ref{sem:rxcml_op_syntax} and Figure~\ref{fig:op_semantics}.  The
+program state is composed of a tuple with $\threadsoup$ representing the pool
+of concurrently executing threads and a collection of unmatched send actions
+$\ActionSoup$. Each thread in $\threadsoup$ is a tuple with a thread id and a
+local state.  This state is either an initial state $\readyOp{e}$ containing
+the expression that will be evaluated by this thread, or a completed state
+$\doneOp$, or the expression being evaluated by this thread.  Each state
+transition is affixed with an action drawn from the trace that is used by the
+machine to determine which rule to apply, as we describe below.
 
 The source language contains function abstraction, application, first-class
 channels, a thread creation operation ({\sf spawn}), message-passing
@@ -1017,16 +1005,17 @@ unique thread identifier $t_0$.
 \noindent Clearly, not every operational execution $(\program,\mathit{tr})$ is a
 relaxed execution.  Consider the following program $\program$:
 
-\begin{code}
+\begin{center}
+\begin{lstlisting}
 fun main () =
 let val c = channel()
 in print (send(c,v); recv c)
 end
-\medskip
-\end{code}
+\end{lstlisting}
+\end{center}
 
 \noindent with trace
-  \[ \trace = b_t.s_t^ic,v.(r_t^jc;\;s_t^ic,v).p_t^kv.e_t \]
+  \[ \trace = b_t~.~s_t^ic,v~.~(r_t^jc;\;s_t^ic,v)~.~p_t^kv~.~e_t \]
 
 \noindent where silent transitions have been elided.  When suffixed with a
 commit action $\commit{\program}{\trace}$, the resulting behavior would not
@@ -1064,6 +1053,7 @@ where $\delta, \delta' \in \intrastate$ such that:
 \end{definition}
 
 \begin{definition}[$\opax$ operator]
+\label{def:opax}
 Let $\E_{o} = (\program, tr)$ be an operational execution. $\opax$ is defined
 as $\opax(\E_{o}) = \Exec$ parameterized with the intra-thread semantics
 $\intratrans{}$ (Definition~\ref{def:intra-rel}), where
@@ -1073,7 +1063,7 @@ $\intratrans{}$ (Definition~\ref{def:intra-rel}), where
 \item for all $\alpha,\beta \in \ActionSet$, $\alpha \po \beta$ iff $T(\alpha)
 	= T(\beta)$ and $\alpha$ precedes $\beta$ in $tr$.
 \item for all pairs $(a,b)$ such that $a = r_t^ic$ and $b = s_{t'}^jc,v$, $a
-	\co b ∧ b \co a$
+	\co b \wedge b \co a$
 \end{itemize}
 \end{definition}
 
@@ -1089,26 +1079,26 @@ well-formed.
 \end{definition}
 
 \begin{theorem}
-If $E_o = (\program,\trace)$ and $\wf{E_o}$, then\\ \mbox{$(\opax(\E_o), \toto) \in
+If $E_o = (\program,\trace)$ and $\wf{E_o}$, then \mbox{$(\opax(\E_o), \toto) \in
 \cml(\program)$}.
 \end{theorem}
 
 \begin{proof}
 We provide a witness for $\opax(\E_o)$ via a generative operator $\opaxGen$
-(Definition~\ref{def:opaxGen_ap}) such that $\opaxGen(\E_o)$ is an axiomatic
-execution (Theorem~\ref{thm:g_ax_ap}) and $\opaxGen(\E_o) = \opax(\E_o)$
-(Theorem~\ref{thm:g_eq_t_ap}). We then prove that if $\E_o$ is well-formed,
-then $\opaxGen(\E_o)$ is well-formed (Lemma~\ref{lem:wf_opaxGen_ap}). Since
-$\opaxGen(\E_o)$ is well-formed, by definition~\ref{def:cml_ap} and
-theorem~\ref{thm:g_eq_t_ap}, $(\opax(\E_o), \toto) \in \cml(\program)$.
+(Definition~\ref{def:opaxGen}) such that $\opaxGen(\E_o)$ is an axiomatic
+execution (Theorem~\ref{thm:g_ax}) and $\opaxGen(\E_o) = \opax(\E_o)$
+(Theorem~\ref{thm:g_eq_t}). We then prove that if $\E_o$ is well-formed,
+then $\opaxGen(\E_o)$ is well-formed (Lemma~\ref{lem:wf_opaxGen}). Since
+$\opaxGen(\E_o)$ is well-formed, by definition~\ref{def:cml} and
+theorem~\ref{thm:g_eq_t}, $(\opax(\E_o), \toto) \in \cml(\program)$.
 \end{proof}
 
 \begin{definition}[$\opaxGen$ operator]
-\label{def:opaxGen_ap}
+\label{def:opaxGen}
 Let $\E_{op} = (\program,\trace) \in \rel(\program)$ be a well-formed
 operational execution. $\opaxGen(\E_{op})$ is an axiomatic execution
 parameterized with the intra-thread semantics $\intratrans{}$
-(definition~\ref{def:intra-rel_ap}) defined as follows:
+(definition~\ref{def:intra-rel}) defined as follows:
 \begin{itemize}
 \item $\opaxGen(\program,\emptyset) = \langle \program, \emptyset, \emptyset,
 	\emptyset \rangle$
@@ -1129,13 +1119,13 @@ parameterized with the intra-thread semantics $\intratrans{}$
 \end{definition}
 
 \begin{theorem}
-\label{thm:g_ax_ap}
+\label{thm:g_ax}
 Let $\E_{op} = (\program,\trace) \in \rel(\program)$ be an operational
 execution. Then, $\opaxGen(\E_{op})$ is an axiomatic execution.
 \end{theorem}
 \begin{proof}
 We show that the quadruple generated by the $\opaxGen$ operator satisfies the
-conditions necessary for an axiomatic execution (Definition~\ref{def:exec_ap}).
+conditions necessary for an axiomatic execution (Definition~\ref{def:exec}).
 In particular, (1) $\ActionSet$ is composed of actions from $\ActionClass{}$,
 (2) $\po$ is a disjoint total order on actions belonging to each thread. (3)
 $\co$ is a symmetric relation and relates actions belonging to the same
@@ -1145,72 +1135,513 @@ The base case is if $\E_{op} = (\program,\emptyset) \in \rel(\program)$, then
 $\opaxGen(\E_{op})$ is an axiomatic execution. If the trace is empty, then
 $\opaxGen(\E_{op}) = \Exec$. Here, $\program$ is a valid program. $\ActionSet$,
 $\po$, and $\co$ are empty. Hence, the conditions defined under
-Definition~\ref{def:exec_ap} trivially hold.
+Definition~\ref{def:exec} trivially hold.
 
 Assume $\opaxGen(\program,\bar{a})$ is an axiomatic execution.  We show that
 $\opaxGen(\program,\bar{a}.b)$ is an axiomatic execution, where
 $b \in \ActionClass{op}$. If $b$ is a silent action or a commit action
-(Definition~\ref{def:opaxGen_ap}.1), then $\opaxGen(\program,\bar{a}.b)
+(Definition~\ref{def:opaxGen}.1), then $\opaxGen(\program,\bar{a}.b)
 = \opaxGen(\program,\bar{a})$.
 
 Let $b \notin (\ActionClass{r} \times \ActionClass{s})$. Then $b \in
-\ActionClass{}$ (Definition~\ref{def:op_act_ap}). In this case
-(Definition~\ref{def:opaxGen_ap}.2), $\opaxGen$ operator adds $b$ to
+\ActionClass{}$ (Definition~\ref{def:op_act}). In this case
+(Definition~\ref{def:opaxGen}.2), $\opaxGen$ operator adds $b$ to
 $\ActionSet$ and adds $\po$ edges from all actions $\alpha \in \ActionSet$ such
 that $T(\alpha) = T(b)$ to $b$ (preserving the total order). $\co$ is not
 modified. By the induction hypothesis, $\opaxGen(\program,\bar{a}.b)$ is an
 axiomatic execution.
 
 Let $b = (\alpha,\beta)$. $\alpha \in \ActionClass{r}, \beta \in
-\ActionClass{s}$ (Definition~\ref{def:op_act_ap}).   In this case, by
-Definition~\ref{def:opaxGen_ap}.3, $\opaxGen$  adds $\alpha$ to $\ActionSet$,
+\ActionClass{s}$ (Definition~\ref{def:op_act}).   In this case, by
+Definition~\ref{def:opaxGen}.3, $\opaxGen$  adds $\alpha$ to $\ActionSet$,
 and introduces $\po$ edges from all actions in $\ActionSet$ that belong to the
 thread $T(\alpha)$ to $\alpha$ (preserving the total order). $\co$ is extended
 with $\{\alpha \co \beta, \beta \co \alpha\}$. By the induction hypothesis,
-$\co$ is a symmetric relation. By Definition~\ref{def:op_act_ap},
+$\co$ is a symmetric relation. By Definition~\ref{def:op_act},
 $\alpha$ and $\beta$ operate on the same channel. Thus,
 $\opaxGen(\program,\bar{a}.b)$ is an axiomatic execution.
 \end{proof}
 
 \begin{theorem}
-\label{thm:g_eq_t_ap}
+\label{thm:g_eq_t}
 Given $\E_o = (\program,\trace) \in \rel(\program)$, $\opax(\E_o) =
 \opaxGen(\E_o)$.
 \end{theorem}
 \begin{proof}
-By theorem~\ref{thm:g_ax_ap}, $\opaxGen(\E_o)$ is an axiomatic
+By theorem~\ref{thm:g_ax}, $\opaxGen(\E_o)$ is an axiomatic
 execution. We need to show that each component in the axiomatic execution
 defined by $\opax$ and generated by $\opaxGen$ are the same.  Both operators
 use the same program $\program$ and set of actions $\ActionSet$ from $\E_o$.
 
-%% For the set of actions $\ActionSet$, $\opax$ includes only non-silent, non-commit actions
-%% (Definition~\ref{def:opax_ap}.1), while $\opaxGen$ does not include the silent
-%% and commit actions (definition~\ref{def:opaxGen_ap}.1).
-
 $\opax$ defines a $\po$ relation between actions $\alpha$ and $\beta$ iff
 $T(\alpha) = T(\beta)$ and $\alpha$ precedes $\beta$ in the trace
-(Definition~\ref{def:opax_ap}.1).  Assume that the operational trace is
+(Definition~\ref{def:opax}.1).  Assume that the operational trace is
 $\trace = \bar{\alpha}.\beta$.  For any $\gamma$ such that $T(\gamma) =
 T(\beta)$, $\gamma \in \bar{\alpha}$, $\gamma$ belongs to the action set
 $\ActionSet$ of
-$\opaxGen(\program,\bar{\alpha})$. Definition~\ref{def:opaxGen_ap}.2 and
-\ref{def:opaxGen_ap}.3 add a $\po$ edge from such a $\gamma$ to $\beta$.
+$\opaxGen(\program,\bar{\alpha})$. Definition~\ref{def:opaxGen}.2 and
+\ref{def:opaxGen}.3 add a $\po$ edge from such a $\gamma$ to $\beta$.
 
-Definition~\ref{def:opax_ap}.3 defines $\co$ such that for all pairs
+Definition~\ref{def:opax}.3 defines $\co$ such that for all pairs
 $(\alpha,\beta)$ in \emph{tr}, $\alpha \co \beta$ and $\beta \co \alpha$.
 $\opaxGen$ extends $\co$ in a similar fashion
-(Definition~\ref{def:opaxGen_ap}.3).
+(Definition~\ref{def:opaxGen}.3).
 \end{proof}
 
 \begin{lemma}
-\label{lem:wf_opaxGen_ap}
+\label{lem:wf_opaxGen}
 Let $\E_o = (\program,\trace) \in \rel(\program)$. If $\E_o$ is well-formed,
 then $\opaxGen(\E_o)$ is well-formed.
 \end{lemma}
 \begin{proof}
 Since $\E_o$ is well-formed, $\opax(\E_o)$ is a well-formed axiomatic execution
-(by Definition~\ref{def:well-formed-rel_ap}). By Theorem~\ref{thm:g_eq_t_ap},
+(by Definition~\ref{def:well-formed-rel}). By Theorem~\ref{thm:g_eq_t},
 $\opax(\E_o) = \opaxGen(\E_o)$. Hence, $\opaxGen(\E_o)$ is a well-formed
 axiomatic execution.
 \end{proof}
 
+\section{Implementation}
+\label{sec:implementation}
+
+The axiomatic semantics provides a declarative way of reasoning about correct
+CML executions. In particular, a well-formed execution does not have a
+happens-before cycle. However, in practice, a speculative execution framework
+that discharges synchronous sends asynchronously (speculatively), needs to
+track the relations necessary to perform the integrity check \emph{on-the-fly},
+detect and remediate any execution that has a happens-before cycle.
+
+To do so, we construct a \emph{dependence graph} that captures the dependencies
+described by an axiomatic execution, and ensure the graph has no cycles. If a
+cycle is detected, we rollback the effects induced by the offending speculative
+action, and re-execute it as a normal synchronous operation. By definition,
+this synchronous re-execution is bound to be correct. The context of our
+investigation is a distributed implementation of CML called \rxcml ({\sc
+RelaXed CML}) built on top of the MultiMLton SML compiler and
+runtime~\cite{JFP14}. We have extended MultiMLton with the infrastructure
+necessary for distributed execution.
+
+\subsection {System Architecture}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{Figures/CRexDesign}
+\caption{\rxcml application stack.}
+\label{fig:c-rex}
+\end{figure}
+
+A schematic diagram of the \rxcml application stack is presented in
+Figure~\ref{fig:c-rex}. An \rxcml application consists of multiple
+\emph{instances}, each of which runs the \emph{same} MultiMLton executable.
+These instances might run on the same node, on different nodes within the same
+datacenter, or on nodes found in different data centers. Each instance has a
+scheduler which preemptively multiplexes execution of user-level CML threads
+over multiple cores. We use the ZeroMQ messaging library~\cite{zeromq} as the
+transport layer over which the \rxcml channel communication is implemented. In
+addition to providing reliable and efficient point-to-point communication,
+ZeroMQ also provides the ability to construct higher-level multicast patterns.
+In particular, we leverage ZeroMQ's publish/subscribe support to implement
+CML's first-class channel based communication.
+
+The fact that every instance in an \rxcml application runs the same program, in
+addition to the property that CML channels are strongly-typed, allows us to
+provide typesafe serialization of immutable values as well as function
+closures. Serializing mutable references is disallowed, and an exception is
+raised if the value being serialized refers to a mutable object. To safely
+refer to the same channel object across multiple instances, channel creation is
+parameterized with an identity string. Channels created with the same identity
+string refer to the same channel object across all instances in the \rxcml\
+application. Channels are first-class citizens and can be sent as messages over
+other channels to construct complex communication protocols.
+
+\subsection{Communication Manager}
+\label{sec:comm_mgr}
+
+Each \rxcml instance runs a single communication manager thread, which maintains
+globally consistent replica of the CML channels utilized by its constituent
+CML threads. The protocol for a single CML communication is illustrated in
+Figure~\ref{fig:comm_mgr}. Since CML channel might potentially be shared among
+multiple threads across different instances, communication matches are
+determined dynamically. In general, it is not possible to determine the
+matching thread and its instance while initiating the communication action.
+Hence, whenever a thread intends to send or receive a value on the channel, its
+intention (along with a value in the case of a send operation), is broadcast to
+every other \rxcml instance. Importantly, the application thread performing the
+send does not block and \emph{speculatively} continues execution.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.75\textwidth]{Figures/CommunicationManager}
+\caption{Communication manager behavior during a send and its matching receive.}
+\label{fig:comm_mgr}
+\end{figure}
+
+Subsequently, an application thread that performs a receive on this channel
+consumes the send action, sends a \emph{join message} to the sender thread's
+instance, and proceeds immediately. In particular, receiver thread does not
+block to determine if the send action was concurrently consumed by a thread in
+another instance. This corresponds to speculating on the communication match,
+which will succeed in the absence of concurrent receives for the same send
+action. On receiving the join message, a \emph{match message} is broadcast to
+every instance, sealing the match. Those instances that speculatively matched
+with the send, except the one indicated in the match message, treat their
+receive action as a mis-speculation. Other instances that have not matched with
+this particular send remove the send action from the corresponding local
+channel replica.
+
+\subsection{Speculative Execution}
+
+Aborting a mis-speculation requires restoring the computation to a previously
+known consistent state. Achieving this entails rolling back all threads that
+communicated with the offending action, transitively. In this regard,
+\emph{stabilizers}~\cite{Ziarek10} provide a suitable abstraction for restoring
+consistent checkpoints in message-passing programs.  A stabilizer builds a
+dependence graph that takes into account intra-thread program order and
+inter-thread communication dependence. However, the implementation reported
+in~\cite{Ziarek10} assumes a centralized structure, and a global barrier that
+stops all execution while a checkpoint is restored; neither condition is
+reasonable in a high-latency, distributed environment.
+
+\subsubsection{Replicated dependence graph.} Instead, \rxcml exploits the
+broadcast nature of the match message (Section~\ref{sec:comm_mgr}) to
+incrementally construct a globally-consistent replica of the dependence graph
+at every instance. The nodes in the dependence graph correspond to the actions
+in the axiomatic definition. Thread spawn and join actions are broadcast to
+allow other instances to add necessary nodes and edges. Maintaining a replica
+of the dependence graph at each replica allows ill-formed executions to be
+detected locally and remediated.
+
+\subsubsection{Well-formedness check.} To ensure observable behavior of an
+\rxcml program to its synchronous equivalent, the compiler automatically
+inserts a \emph{well-formedness check} before observable actions in the
+program. \rxcml treats system calls, access to mutable references, and foreign
+function calls as observable actions. On reaching a well-formedness check, a
+\emph{cycle-detector} is invoked which checks for cycles in the dependence
+graph leading up to this point. If the execution is well-formed (no cycles in
+the dependence graph), then the observable action is performed. Since there is
+no need to check for well-formedness of this fragment again, the verified
+dependence graph fragment is garbage collected on all instances.
+
+%% \footnote{We are currently investigating the possibility of speculating
+%% beyond reference accesses.}  - SJ: commented out since we do not provide
+%% evidence of a solution.
+
+\subsubsection{Checkpoint.} After a well-formedness check, the state of the
+current thread is consistent. Hence, right before the next (speculative)
+communication action, we checkpoint the current thread by saving its current
+continuation. This ensures that the observable actions performed after the
+well-formedness check are not re-executed if the thread happens to rollback. In
+addition, this checkpointing scheme allows multiple observable actions to be
+performed between a well-formedness check and the subsequent checkpoint. Unlike
+Stabilizers~\cite{Ziarek10}, every thread in an \rxcml application has exactly
+one saved checkpoint continuation during the execution. Moreover, \rxcml\
+checkpointing is un-coordinated~\cite{RollbackRecovery}, and does not require
+that all the threads that transitively interacted capture their checkpoint
+together, which would be unreasonable in geo-distributed application.
+
+\subsubsection{Remediation.} If the well-formedness check does report a cycle,
+then all threads that have \emph{transitively} observed the mis-speculation are
+rolled back. The protocol roughly follows the same structure described
+in~\cite{Ziarek10}, but is asynchronous and does not involve a global barrier.
+The recovery process is a combination of checkpoint (saved continuation) and
+log-based (dependence graph) rollback and recovery~\cite{RollbackRecovery}.
+Every mis-speculated thread is eventually restored to a consistent state by
+replacing its current continuation with its saved continuation, which was
+captured in a consistent state.
+
+Recall that \rxcml automatically captures a checkpoint, and only stores a
+single checkpoint per thread. As a result, rolling back to a checkpoint
+might entail re-executing, in addition to mis-speculated communication
+actions, correct speculative communications as well (i.e., communication
+actions that are not reachable from a cycle in the dependence graph).  Thus,
+after the saved continuation is restored, correct speculative actions are
+\emph{replayed} from the dependence graph, while mis-speculations are
+discharged non-speculatively (i.e., synchronously). This strategy ensures
+progress. Finally, we leverage ZeroMQ's guarantee on FIFO ordered delivery of
+messages to ensure that messages in-flight during the remediation process are
+properly accounted for.
+
+\subsection{Handling full CML}
+
+Our discussion so far has been limited to primitive {\tt send} and {\tt
+recv} operations. \rxcml also supports base events, {\tt wrap}, {\tt
+guard}, and {\tt choice} combinators.  The {\tt wrap} and \cf{guard}
+combinators construct a complex event from a simpler event by suffixing and
+prefixing computations, resp.  Evaluation of such a complex event is
+effectively the same as performing a \emph{sequence} of actions encapsulated
+by the event.  From the perspective of reasoning about well-formed
+executions, {\tt wrap} and {\tt guard} are purely syntactic additions.
+
+Choices are more intriguing. The {\tt choose} combinator operates over a list
+of events, which when discharged, non-deterministically picks one of the
+enabled events. If none of the choices are already enabled, one could imagine
+speculatively discharging every event in a choice, picking one of the enabled
+events, terminating other events and rolling back the appropriate threads.
+However, in practice, such a solution would lead to large number of
+mis-speculations. Hence, \rxcml discharges choices non-speculatively. In order
+to avoid spurious invocations, negative acknowledgment events ({\tt withNack})
+are enabled only after the selection to which they belong is part of a
+successful well-formedness check.
+
+\subsection{Extensions}
+Our presentation so far has been restricted to speculating only on synchronous
+sends. Speculation on receives is, in general, not possible since the
+continuation might depend on the value received. However, if the receive is on
+a unit channel, speculation has a sensible interpretation. The well-formedness
+check only needs to ensure that the receive action has been paired up, along
+with the usual well-formedness checks. Speculating on these kinds of receive
+actions, which essentially serve as synchronization barriers, is useful,
+especially during a broadcast operation of the kind described in
+Figure~\ref{code:bchan} for receiving acknowledgments.
+
+\section{Case Studies}
+\label{sec:results}
+
+\subsection{Online Transaction Processing}
+
+Our first case study considers a CML implementation of an online transaction
+processing (OLTP) system.  Resources are modeled as actors that communicate to
+clients via message-passing, each protected by a lock server. A transaction can
+span multiple resources, and is implemented pessimistically. Hence, a
+transaction must hold all relevant locks before starting its computation.  We
+can use our relaxed execution semantics to allow transactions to effectively
+execute optimistically, identifying and remediating conflicting transactions
+\emph{post facto}; the key idea is to model conflicting transactions as an
+ill-formed execution. We implement each lock server as a single CML thread,
+whose kernel is:
+
+\lstset{numbers=none}
+\begin{lstlisting}
+fun lockServer (lockChan: unit chan) (unlockChan: unit chan) =
+  (recv lockChan;
+	 recv unlockChan;
+	 lockServer lockChan unlockChan)
+\end{lstlisting}
+\lstset{numbers=left,numberstyle=\tiny,stepnumber=1}
+
+\noindent In order to obtain a lock, a $\unit$ value is \emph{synchronously}
+sent to the \cf{lockChan}. Since the lock server moves to a state where the
+only operation it can perform is receive a value on the \cf{unlockChan}, we
+have the guarantee that no two threads can obtain the lock concurrently. After
+the transaction, a $\unit$ value is sent on the \cf{unlockChan} to release
+the lock. It is up to the application to ensure that the lock servers are
+correctly used, and when obtaining multiple locks, locks are sorted to avoid
+deadlocks.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{Figures/OLTC}
+\caption{A possible serializability violation that arises because of
+asynchronous (speculative) communication with the lock server.}
+\label{fig:oltc}
+\end{figure}
+
+In the absence of contention, the involvement of the lock server adds
+unnecessary overhead.  By communicating with \cf{lockChan} asynchronously, we
+can allow the client (the thread performing the transaction), to concurrently
+proceed with obtaining other locks or executing the transaction.  Of course,
+synchronous communication on the \cf{lockChan} ensures atomicity of a
+transaction performed on the resource protected by the lock. However, these
+guarantees are lost in the presence of asynchrony.
+
+Consider the example presented in Figure~\ref{fig:oltc}, which shows a
+serializability violation that arises because communication with the
+lock server takes place asynchronously, effectively introducing speculation.
+Two clients transactionally perform operations A,B and C, resp.  on a shared
+resource. This resource is protected by the lock server.  Happens-before edges
+are represented as directed edges. During speculative execution, clients send
+lock requests speculatively, labeled \mycirc{S} on the edges, allowing them to
+continue with their transactions without waiting for the lock server to
+respond.
+
+In this figure, serializability violations are captured as a cycle in the
+dependence graph, represented by the dotted edges. \rxcml\ rejects such
+executions, causing the transaction to abort, and be re-executed
+non-speculatively.
+
+\subsubsection{Results}
+
+For our evaluation, we implemented a distributed version of this program
+(\cf{vacation}) taken from the STAMP benchmark suite~\cite{STAMP}.  To adapt
+the benchmark for a distributed environment, we partitioned resources into 16
+\emph{shards}, each protected by a lock server.  The workload was setup for
+moderate contention, and each transaction involves 10 operations. The shards
+were spread across 16 EC2 M1 large instances within the same EC2 availability
+zone. The clients were instantiated from all of the different regions on M1
+small instances to simulate the latencies involved in a real web-application. A
+benchmark run involved 10K transactions, spread equally across all of the
+available clients.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{Graphs/oltp_time}
+\caption{Performance comparison on distributed \texttt{vacation} (OLTP)
+benchmark. Lower is better.}
+\label{grf:oltp}
+\end{figure}
+
+The performance results are presented in the Figure~\ref{grf:oltp}. The number
+of clients concurrently issuing transaction requests was increased from 1 to
+48. \rxcml\ is the speculative version, while Sync is the synchronous,
+non-speculative variant. The 1-client Sync version took 1220 seconds to
+complete. For comparison, we extended the original C version with a similar
+shared distribution structure. This run was 1.3$\times$ faster than the CML
+baseline. The benchmark execution under \rxcml\ scales much better than the
+Sync version due to optimistic transactions. With 48 clients, \rxcml\ version
+was 5.8$\times$ faster than then Sync version. Under \rxcml, the number of
+transaction conflicts does increase with the number of clients. With 48
+clients, 9\% of the transactions executed under \rxcml\ were tagged as
+conflicting and re-executed non-speculatively.  This does not, however,
+adversely affect scalability.
+
+\subsection{Collaborative Editing}
+
+Our next case study is a real-time, decentralized collaborative editing tool.
+Typically, commercial offerings such as Google Docs, EtherPad, etc., utilize a
+centralized server to coordinate between the authors. Not only does the server
+eventually become a bottleneck, but service providers also need to store a copy
+of the document, along with other personal information, which is undesirable.
+We consider a fully decentralized solution, in which authors work on a local
+copy of the shared document for responsiveness, with remote updates merged
+incrementally. Although replicas are allowed to diverge, they are expected to
+converge eventually. This convergence is achieved through \emph{operational
+transformation}~\cite{SuleimanGroup97}. Dealing with operational transformation
+in the absence of a centralized server is tricky~\cite{Nichols95}, and
+commercial collaborative editing services like Google Wave impose additional
+restrictions with respect to the frequency of remote updates~\cite{Wave} in
+order to build a tractable implementation.
+
+We simplify the design by performing \emph{causal atomic broadcast} when
+sending updates to the replicas. Causal atomic broadcast ensures that the
+updates are applied on all replicas in the same global order, providing a
+semblance of a single centralized server.  Implemented na\"{i}vely, i.e.,
+performing the broadcast synchronously, however, is an expensive operation,
+requiring coordination among all replicas for every broadcast operation
+compromising responsiveness. Our relaxed execution model overcomes this
+inefficiency.
+
+\begin{figure}
+\begin{lstlisting}
+(* lc: client chan, sc: server chan, tc: timeOut chan *)
+fun serverDaemon id rIn lOut =
+let
+	(* Updates from other server daemons *)
+	val remoteRecv = wrap (brecvEvt sc, fn rOps' =>
+				serverDaemon id (rIn @ rIn') lOut)
+	(* Updates to other server daemons *)
+	val remoteSend =
+	  if lOut = [] then neverEvt ()
+		else
+			let val (lOut',_) = xform (lOut, rIn)
+			in wrap (bsendEvt (sc, lOut', id),
+  					   fn () => serverDaemon id rIn [])
+			end
+  (* interaction with the client *)
+  val localComm =
+		wrap (recvEvt tc, fn () =>
+			let
+				val lOps = sync
+				  	(choose (recvEvt lc, alwaysEvt []))
+				val (_, rIn') = xform (lOps, rIn)
+				val _ = updateDocument(rIn')
+			in serverDaemon id [] (lOut @ lOps)
+			end)
+in
+  sync (choose (localComm,remoteRecv,remoteSend))
+end
+
+fun timeoutManager to =
+  sync (wrap (timeoutEvent to,
+	  fn () => send (tc,()); timerThread to))
+\end{lstlisting}
+\caption{Server Daemon for Collaborative Editing.}
+\label{code:serverDaemon}
+\end{figure}
+
+The key advantage of our system is that the causal atomic broadcast is
+performed speculatively, allowing client threads to remain responsive. Each
+client participating in the collaborative editing session runs a server daemon,
+whose implementation is given in Figure~\ref{code:serverDaemon}. The server
+daemon fetches updates from the user-interface thread (client) over the channel
+\cf{lc}, and coordinates with other server daemons at other remote locations
+over the channel \cf{rc}.  \cf{rIn} represents the list of incoming remote
+operations that have not yet been merged with the local document replica.
+\cf{lOut} represents the list of local operations yet to be broadcast.
+
+At every iteration of the server daemon loop, there is a choice (line 26) between
+performing (a) a local receive (\cf{localComm}), (b) a remote send
+(\cf{remoteSend}), or (c) a remote receive (\cf{remoteRecv}) (line 29). We
+have extended the implementation of broadcast primitives presented in
+Figure~\ref{code:bchan} with events that encapsulate broadcast send and
+receive. Remote sends are only enabled if \cf{lOut} is not empty. Otherwise,
+it is a \cf{neverEvt()} which will never be picked in a choice. If
+\cf{lOut} is not empty, then the outstanding messages are transformed
+against the remote messages and sent to all other daemons using causal atomic
+broadcast (lines 11-13).
+
+By receiving broadcasted messages on the same thread as the one that performs
+the broadcast, we ensure a total order on message reception at every client.
+Causal atomic broadcast ensures that all daemons receive the update in the same
+order, ensuring convergence of all remote states. On receiving a remote update,
+the server daemon simply appends the update to the list of pending updates yet
+to be applied to the local replica (lines 5-6).
+
+The user-interface thread sends the updates to the server daemon on the \cf{lc}
+channel, making them available to other replicas. This communication is also
+made asynchronous through speculation, so that the UI stays responsive to the
+author. The daemon uses a \cf{timeoutManager} (lines 29-31) to periodically
+fetch updates from the user interface thread. The daemon then receives local
+updates \cf{lOps}, if any, from the channel \cf{lc} (lines 19-20).
+
+Causal atomic broadcast for inter-daemon communication ensures that operations
+in \cf{rIn} at every daemon appear in the same order. In other words, every
+daemon is in the same abstract state. Hence, we can simply transform the
+unapplied remote operations \cf{rIn} with respect to local operations
+\cf{lOps}, to yield an \cf{rIn'} (line 21) that considers the remote updates in
+the context of local ones.  The daemon then updates the document with the
+remote operations, by applying further transformation to account for additional
+local updates that might have occurred between the time the user-interface sent
+a message to it and now (line 22). This operation might perform a
+well-formedness check to check for consistency as updating the document is an
+effectful operation. This commit prevents speculation from leaking to the user.
+
+\subsubsection{Results}
+
+We use a collaborative editing benchmark generator described
+in~\cite{MartinAU12} to generate a random trace of operations, based on
+parameters such as trace length, percentage of insertions, deletions, number of
+replicas, local operation delay, etc. Our benchmarking trace contains 30K
+operations, 85\%(15\%) of which are insertions(deletions), and 20\% of which
+are concurrent operations. We insert a 25 ms delay between two consecutive
+local operations to simulate user-interaction. Updates from each replica is
+causal atomically broadcasted every 250 ms. Each replica is represented by a
+\rxcml\ instance placed in widely distributed Amazon EC2 availability zones
+chosen to capture the geo-distributed nature of collaborative editing. The
+average inter-instance latency was 173 ms, with a standard deviation of 71.5.
+Results are reported as the average of five runs.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{Graphs/collab}
+\caption{Performance comparison on collaborative editing benchmark. Lower is
+better.}
+\label{grf:collab}
+\end{figure}
+
+We consider the time taken by a collaborative editing session to be the time
+between the first operation generation and the completion of the last broadcast
+operation, at which point the documents at every replica would have converged.
+Figure~\ref{grf:collab} shows results with respect to total running time. Sync
+represents an ordinary CML execution, while \rxcml\ represents our new
+implementation. With 2-authors, \rxcml\ version took 485 seconds to complete,
+and was 37\% faster than the synchronous version. As we increase the number of
+concurrent authors, the number of communication actions per broadcast operation
+increases.  Hence, we expect the benchmark run to take longer to complete. The
+non-speculative version scales poorly due to the increasing number of
+synchronizations involved in the broadcast operations. Indeed, Sync is
+7.6$\times$ slower than \rxcml\ when there are six concurrent authors. Not
+surprisingly, \rxcml\ also takes longer to complete a run as we increase the
+number of concurrent authors. This is because of increasing communication
+actions per broadcast as well as increase in mis-speculations. However, with
+six authors, it only takes 1.67$\times$ longer to complete the session when
+compared to having just two authors, and illustrates the utility of speculative
+communication.
