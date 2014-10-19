@@ -1,6 +1,6 @@
-\newcommand{\lc}{LC}
-\newcommand{\prc}{PR}
-\newcommand{\smc}{SMC}
+\newcommand{\lc}{LC\xspace}
+\newcommand{\prc}{PR\xspace}
+\newcommand{\smc}{SMC\xspace}
 \newcommand{\kcore}{k_{core}}
 \newcommand{\kmesh}{k_{mesh}}
 \newcommand{\kram}{k_{ram}}
@@ -27,23 +27,25 @@ coherent address space on the SCC, optimizing for the SCC's memory hierarchy.
 We begin with a \emph{local collector}\footnote{Other terms have been used in
 the literature to indicate similar heap designs, notably private nursery, local
 heap collector, thread-local or thread-specific heap, and on-the-fly
-collection.} (\lc) design~\cite{} that partitions the heap into local heaps on
-each core and a shared heap for cross-core communication. However, we observe
-that the cost of memory barriers utilized in preserving the heap invariants
-have significant costs. To eliminitate theses costs, we propose a new GC design
-(\prc) that utilizes the ample concurrency offered by our programming model
-combined with a dynamic shape analysis to eliminate some of the GC overheads.
-This naturally leads to a GC design that focuses on
-\emph{procrastination}~\cite{mmgc}, delaying writes that would necessitate
-establishing forwarding pointers until a GC, where there is no longer a need
-for such pointers. The GC leverages the mostly functional nature of ACML
-programs and a new object property called \emph{cleanliness}, which enables a
-broad class of objects to be moved from a local to a shared heap without
-requiring a full traversal of the local heap to fix existing references;
-cleanliness enables an important optimization that achieves the effect of
-procrastination without actually having to initiate a thread stall. Our final
-design (\smc) integrates SCC's support for software-managed cache coherence
-(SMC)~\cite{SMC} into the extant memory barriers to improve the design further.
+collection.} (\lc)
+design~\cite{Steele75,Doligez93,Steensgaard00,Anderson10,Marlow11,Auhagen11}
+that partitions the heap into local heaps on each core and a shared heap for
+cross-core communication. However, we observe that the cost of memory barriers
+utilized in preserving the heap invariants have significant costs. To
+eliminitate theses costs, we propose a new GC design (\prc) that utilizes the
+ample concurrency offered by our programming model combined with a dynamic
+shape analysis to eliminate some of the GC overheads. This naturally leads to a
+GC design that focuses on \emph{procrastination}~\cite{mmgc}, delaying writes
+that would necessitate establishing forwarding pointers until a GC, where there
+is no longer a need for such pointers. The GC leverages the mostly functional
+nature of ACML programs and a new object property called \emph{cleanliness},
+which enables a broad class of objects to be moved from a local to a shared
+heap without requiring a full traversal of the local heap to fix existing
+references; cleanliness enables an important optimization that achieves the
+effect of procrastination without actually having to initiate a thread stall.
+Our final design (\smc) integrates SCC's support for software-managed cache
+coherence (SMC)~\cite{SMC} into the extant memory barriers to improve the
+design further.
 
 We begin by discussing in detail the architecture and programming model of the
 SCC, which serves as our prototype non cache coherent architecture. However,
@@ -125,15 +127,16 @@ write-combine buffers).
 
 SCC's software stack also includes cross-core message-passing libraries
 implemented over the MPBs, including RCCE~\cite{Mattson2010} and
-RCKMPI~\cite{Urena2011}. RCCE is optimized for SPMD~\cite{} programming model,
-where the program is structured in such a way that the sender and the receiver
-ideally arrive at the communication point at the same time. The sender writes
-the message to the MPB, while the receiver busy waits (invalidating its cache
-every iteration to fetch recent writes), waiting for a special flag value to be
-written along with the message. After the sender writes the flag, the receiver
-reads the message into its private memory, while the sender busy waits (also
-invalidating its cache every iteration). Finally, the receiver writes a
-completion flag, which concludes the message transfer.
+RCKMPI~\cite{Urena2011}. RCCE is optimized for Single Program Multiple Data
+(SPMD) parallel programming model, where the program is structured in such a
+way that the sender and the receiver ideally arrive at the communication point
+at the same time. The sender writes the message to the MPB, while the receiver
+busy waits (invalidating its cache every iteration to fetch recent writes),
+waiting for a special flag value to be written along with the message. After
+the sender writes the flag, the receiver reads the message into its private
+memory, while the sender busy waits (also invalidating its cache every
+iteration). Finally, the receiver writes a completion flag, which concludes the
+message transfer.
 
 It is worthwhile pointing out that RCCE uses just the MPBs, while RCKMPI uses
 MPBs for small messages (less than 8KB --- the maximum message size that would
@@ -364,8 +367,7 @@ executing the barrier.
 \begin{figure}
   \centering
   \includegraphics[width=0.9\textwidth]{Graphs/RB_overhead}
-	\caption{Read barrier overhead as a percentage of mutator time. The error
-	bars represent 95\% confidence intervals using Student's t-distribution.}
+	\caption{Read barrier overhead as a percentage of mutator time.}
   \label{fig:rb-overhead}
 \end{figure}
 
@@ -394,8 +396,7 @@ time executing read barriers for our benchmarks.
 \end{center}
 \caption{Effectiveness of read barrier checks: RB invocations represents the
 average number of read barrier invocations and forwarded represents the average
-number of instances when the read barrier encountered a forwarded object. The
-95\% confidence intervals using Student's t-distribution is also reported.}
+number of instances when the read barrier encountered a forwarded object.}
 \label{tab:rb_utility}
 \end{table}
 
@@ -932,6 +933,7 @@ updates are visible to all of the cores. After an exporting write, we invoke
 Figure~\ref{code:write_barrier_smc}).
 
 \subsection{Mapping channel communication over message-passing buffers}
+\label{sec:comm_opt}
 
 In this section, we describe how we map the \MM communication model on top of
 the MPB. The main challenge here is the compatibility between the \MM
@@ -1026,6 +1028,12 @@ only involves a value or a pointer exchange. This case is similar to case 1.
 \section{Evaluation}
 \label{sec:gc_bench}
 
+The core, mesh controller, and memory on the SCC can be configured to run at
+different frequencies. For our experiments we chose 533 MHz, 800 MHz, and 800
+MHz for core, mesh, and memory respectively. In our results, wherever
+appropriate, we present the 95\% confidence intervals, obtained using Student's
+t-distribution.
+
 For our experimental evaluation, we picked 8 benchmarks from the MLton
 benchmark suite. The benchmarks were derived from sequential standard ML
 implementation and were parallelized using ACML~\cite{Ziarek11}. The benchmarks
@@ -1066,24 +1074,20 @@ inputs.
 \end{tabular}
 \end{center}
 \caption{Benchmark characteristics. \%Sh represents the average fraction of
-bytes allocated in the shared heap. 95\% confidence intervals using Student's
-t-distribution is also reported.}
+bytes allocated in the shared heap.}
 \label{tab:bench_char}
 \end{table}
 
-The core, mesh controller, and memory on the SCC can be configured to run at
-different frequencies. For our experiments we chose 533 MHz, 800 MHz, and 800
-MHz for core, mesh, and memory respectively. The benchmark characteristics is
-given in Figure~\ref{tab:bench_char}. The numbers were obtained using local
-collector (\lc) with programs running on 48 cores, and the average of the
-results is reported. The benchmarks were designed such that the input size and
-the number of threads are tunable. Out of the total bytes allocated during the
-program execution, on average 5.4\% is allocated in the shared heap. Thus, most
-of the objects allocated are collected locally, without the need for stalling
-all of the mutators. The allocation rate on the SCC is typically much lower
-than comparable general purpose commerical offerings. On the SCC, not only is
-the processor slow (533MHz) but also the serial memory bandwidth for our
-experimental setup is only around 70 MB/s.
+The benchmark characteristics is given in Figure~\ref{tab:bench_char}. The
+numbers were obtained using local collector (\lc) with programs running on 48
+cores, and the average of the results is reported. The benchmarks were designed
+such that the input size and the number of threads are tunable. Out of the
+total bytes allocated during the program execution, on average 5.4\% is
+allocated in the shared heap. Thus, most of the objects allocated are collected
+locally, without the need for stalling all of the mutators. The allocation rate
+on the SCC is typically much lower than comparable general purpose commerical
+offerings. On the SCC, not only is the processor slow (533MHz) but also the
+serial memory bandwidth for our experimental setup is only around 70 MB/s.
 
 \subsection{Performance}
 
@@ -1093,8 +1097,8 @@ experimental setup is only around 70 MB/s.
   \subfigure[Total time (48 cores)]{\label{fig:time_SCC}\includegraphics[width=0.45\textwidth]{Graphs/time_scc}}
   \subfigure[Mutator time (48 cores)]{\label{fig:mutator_time_SCC}\includegraphics[width=0.45\textwidth]{Graphs/mutator_time_scc}}
   \subfigure[GC time (48 cores)]{\label{fig:gc_time_SCC}\includegraphics[width=0.45\textwidth]{Graphs/gc_time_scc}}
-	\caption{Performance comparison of local collector with read barriers (LC),
-	procrastinating collector without read barriers (PRC), and collector
+	\caption{Performance comparison of local collector with read barriers (\lc),
+	procrastinating collector without read barriers (\prc), and collector
 	utilizing software-managed cache coherence (SMC) : Geometric mean for 8
 	benchmarks.}
   \label{fig:time}
@@ -1103,8 +1107,8 @@ experimental setup is only around 70 MB/s.
 Figurue~\ref{fig:time} presents the speedup results and illustrates space-time
 trade-offs critical for any garbage collector evaluation. Among the three
 variants, SMC performs the best (Figure~\ref{fig:speedup}) due to the fact that
-most of the accesses under SMC is cached, unlike LC and PRC. We also see that
-the performance of LC and PRC start to flatten out due to the contention on the
+most of the accesses under SMC is cached, unlike \lc and \prc. We also see that
+the performance of \lc and \prc start to flatten out due to the contention on the
 uncached shared memory as we increase the number of cores. Thus, with
 increasing number of cores, the uncached shared memory becomes the bottleneck.
 
@@ -1112,11 +1116,11 @@ As we decrease the overall heap size, we see that the programs take longer to
 run, due to the more frequent GCs (Figure~\ref{fig:time_SCC}). The reduction in
 heap size, by definition, does not adversely affect the mutator time when
 compared with the GC time. At 3$\times$ the minimum heap size under which the
-programs would run, PRC is 17\% faster than LC, and SMC is 18\% faster than
-PRC. Overall, SMC is 32\% faster than LC.
+programs would run, \prc is 17\% faster than \lc, and SMC is 18\% faster than
+\prc. Overall, SMC is 32\% faster than \lc.
 
-The mutator time (Figure~\ref{fig:mutator_time_scc}) of LC is consistently
-higher than PRC due to the elimination of read barrier overheads under PRC.
+The mutator time (Figure~\ref{fig:mutator_time_SCC}) of \lc is consistently
+higher than \prc due to the elimination of read barrier overheads under \prc.
 Although SMC does have read barrier overheads, caching much of the shared
 memory accesses keeps the mutator time low. We instrumented our read and write
 barriers to classify the memory accesses. On average, across all of the
@@ -1135,7 +1139,7 @@ uncached memory. Thus, SMC is able to potentially cache more than 99\% of
 memory accesses.
 
 There is very little difference between the GC times
-(Figure~\ref{fig:gc_time_SCC}) between LC and PRC. This is because both the
+(Figure~\ref{fig:gc_time_SCC}) between \lc and \prc. This is because both the
 variants are similar in terms of the actual GC work. However, SMC's GC time
 tends to be lower since part of the expensive shared heap collection itself is
 cached. Thus, software-managed cache coherence not only benefits the mutator
@@ -1143,7 +1147,7 @@ but also the garbage collector.
 
 \subsection{Evaluating Procrastinating Collector}
 
-In this section, we will focus on the procrastinating collector (PRC) design,
+In this section, we will focus on the procrastinating collector (\prc) design,
 and analyze the impact of different optimizations.
 
 \subsubsection{Impact of cleanliness}
@@ -1160,7 +1164,7 @@ programs running on 48-cores.
 \begin{center}
 \begin{tabular} {|l|r|r|r|}
 \hline
-{\bf Benchmark} & {\bf PRC} & {\bf PRC MU-} & {\bf PRC CL-} \\
+{\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
 \hline
 AllPairs 		& 604 \ci{42}		&	616 \ci{43}			&	28573 \ci{1429} \\
 BarnesHut 	& 8376 \ci{503}	&	82284 \ci{3291}	& 23504887 \ci{1175244} \\
@@ -1173,15 +1177,15 @@ Raytrace 		& 881 \ci{35}		& 973 \ci{39}			& 13464 \ci{404} \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Average number of preemptions on write barrier, along with 95\% confidence intervals.}
+\caption{Average number of preemptions on write barrier.}
 \label{tab:preempt}
 \end{table}
 
 Table~\ref{tab:preempt} shows the number of preemptions on write barrier for
-different configurations. PRC represents the variant with all of the features
-enabled; PRC MU- shows a cleanliness optimization that does not take an
+different configurations. \prc represents the variant with all of the features
+enabled; \prc MU- shows a cleanliness optimization that does not take an
 object's mutability into consideration in determining cleanliness (using only
-recorded reference counts instead), and PRC CL- represents preemptions incurred
+recorded reference counts instead), and \prc CL- represents preemptions incurred
 when the collector does not use any cleanliness information at all. Without
 cleanliness, on average, the programs perform substantially more preemptions
 when encountering a write barrier.
@@ -1196,7 +1200,7 @@ increase in the number of local collections.
 \begin{center}
 \begin{tabular} {|l|r|r|r|}
 \hline
-{\bf Benchmark} & {\bf PRC} & {\bf PRC MU-} & {\bf PRC CL-} \\
+{\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
 \hline
 AllPairs & 0.08 \ci{0} & 0.08 \ci{0} & 38.55 \ci{2.31} \\
 BarnesHut & 0.17 \ci{0.01} & 19.2 \ci{0.96} & 100 \ci{3} \\
@@ -1209,12 +1213,13 @@ Raytrace & 1.72 \ci{0.1} & 1.72 \ci{0.07} & 24.86 \ci{0.99} \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Average percentage of forced GCs out of the total number of local major GCs.}
+\caption{Average percentage of forced GCs out of the total number of local
+major GCs.}
 \label{tab:forcedGCs}
 \end{table}
 
 Table~\ref{tab:forcedGCs} shows the percentage of local major GCs that were
-forced compared to the total number of local major GCs. PRC CL- shows the
+forced compared to the total number of local major GCs. \prc CL- shows the
 percentage of forced GCs if cleanliness information is not used. On average,
 49\% of local major collection performed is due to forced GCs if cleanliness
 information is not used, whereas it is less than 1\% otherwise.  On benchmarks
@@ -1228,11 +1233,227 @@ programs.
   \centering
   \includegraphics[width=\textwidth]{Graphs/slowdown_cleanliness}
 	\caption{Impact of utilizing object mutability information and cleanliness
-	analysis on the performance of PRC.}
+	analysis on the performance of \prc.}
   \label{fig:slowdown-cleanliness}
 \end{figure}
 
 Figure~\ref{fig:slowdown-cleanliness} shows the running time of programs
 without using cleanliness. On average, programs tend to run 28.2\% slower if
 cleanliness information is ignored. The results show that cleanliness analysis
-therefore plays a significant role in the PRC design.
+therefore plays a significant role in the \prc design.
+
+\subsubsection{Impact of immutability}
+
+If the source of an exporting write is immutable, we can make a copy of the
+object in the shared heap and assign a reference to the new shared heap object
+to the target. Hence, we can ignore the reference count of such objects. Not
+all languages may have the ability to distinguish between mutable and immutable
+objects in the compiler or in the runtime system. Hence, we study the impact of
+our local collector design with mutability information in mind.  To do this, we
+ignore the test for mutability in the cleanliness check
+(Figure~\ref{code:cleanliness}) and modify the object lifting code in
+Figure~\ref{code:lift} to treat all objects as mutable.
+
+\prc MU- in Table~\ref{tab:preempt} and Table~\ref{tab:forcedGCs} show the
+number of write barrier preemptions and the percentage of forced GCs,
+respectively, if all objects were treated as mutable.  For some programs such
+as {\tt AllPairs}, {\tt CountGraphs}, or {\tt Kclustering}, object mutability
+does not play a significant factor.  For benchmarks where it does,
+distinguishing between mutable and immutable objects helps avoid inducing
+preemptions on a write barrier since a copy of the immutable object can be
+created in the shared heap without the need to repair existing references to
+the local heap copy.
+
+Figure~\ref{fig:slowdown-cleanliness} shows the performance impact of taking
+object mutability into account. While ignoring object mutability information,
+{\tt BarnesHut}, {\tt GameOfLife} and {\tt Nucleic} are slower due to the
+increased number of forced GCs. Interestingly, {\tt AllPairs}, {\tt
+CountGraphs}, {\tt Kclu\allowbreak stering} and {\tt Raytrace} are marginally
+faster if the mutability information is ignored. This is due to not having to
+manipulate the \cf{imSet} (Line 15 in Figure~\ref{code:lift}), and walking
+immutable objects after the objects are lifted (Line 22 in
+Figure~\ref{code:lift}). On average, we see a 11.4\% performance loss if
+mutability information is not utilized for cleanliness.
+
+\subsubsection{Impact of heap session}
+\label{sec:impact_session}
+
+\begin{table}
+\begin{center}
+\begin{tabular} {|l|r|r|r|}
+\hline
+{\bf Benchmark} & {\bf \% LM Clean} & {\bf Avg. Session Size (Bytes)} \\
+\hline
+AllPairs & 5.35 \ci{0.37} & 2966 \ci{119} \\
+Barneshut & 13.27 \ci{0.53} & 1596 \ci{96} \\
+Countgraphs & 8.86 \ci{0.53} & 3648 \ci{73} \\
+GameOfLife & 23.9 \ci{1.2} & 1384 \ci{55} \\
+Kclustering & 18.13 \ci{0.54} & 2248 \ci{135} \\
+Mandelbrot & 4.64 \ci{0.09} & 8549 \ci{598} \\
+Nucleic & 13.3 \ci{0.27} & 1226 \ci{37} \\
+Raytrace & 8.28 \ci{0.41} & 1112 \ci{22} \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Impact of heap session: \% LM clean represents the fraction of
+instances when a clean object closure has at least one object with
+\cf{LOCAL\_MANY} references.}
+\label{tab:session-impact}
+\end{table}
+
+In order to assess the effectiveness of using heap sessions, we measured the
+percentage of instances where the source of an exporting write is clean with at
+least one of the objects in the closure has a \cf{LOCAL\_MANY} reference.
+During such instances, we walk the current heap session to fix any references
+to forwarded objects. Without using heap sessions, we would have preempted the
+thread in the write barrier, reducing  available concurrency. The results are
+presented in Table~\ref{tab:session-impact}.
+
+The first column shows the percentage of instances when an object closure is
+clean and has at least one object with \cf{LOCAL\_MANY} references. On average,
+we see that 12\% of clean closures have at least one object with
+\cf{LOCAL\_MANY} references. We also measured the average size of heap sessions
+when the session is traced as a part of lifting an object closure to the shared
+heap (Line 25 in Figure~\ref{code:lift}). The average size of a heap session
+when it is traced is 2859 bytes, which is less than a page size. These results
+show that utilizing heap sessions significantly contributes to objects being
+tagged as clean, and heap sessions are small enough to not introduce
+significant overheads during tracing.
+
+
+\subsection{MPB mapped channels}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\textwidth]{Graphs/speedup_scc_chan}
+\caption{Performance comparison of first-class channel communication over the
+MPB \cf{(MBP+)} vs solely over the shared memory \cf{(MPB-)}: Geometric mean
+over 8 benchmarks.}
+\label{fig:speedup_scc_chan}
+\end{figure}
+
+
+In this section, we study the impact of MPB mapped channels. In order to
+evaluate the benefit of mapping the first-class channel communication over the
+message passing buffer memory, we implemented a version of our communication
+library that does not use the message passing buffer memory. Recall that if the
+channel is located in the shared heap, the message in the local heap, and the
+message does not have a mutable object in its transitive closure, we perform
+the transfer over the message passing buffer (Case 4 in
+Section~\ref{sec:comm_opt}). Instead, we eagerly globalize the transitive
+closure of the message and just share the pointer with the receiving thread
+(similar to Case 3). We call this version MPB-, and the original version MPB+.
+
+Figure~\ref{fig:speedup_scc_chan} shows the performance comparison of MPB+
+versus MPB-. On 48-cores, MPB+ is only around 9\% faster than the MPB- version.
+We can attribute several reasons for this marginal improvement. First, we
+observed that, on average, around only 32\% of channel communications were
+taking advantage of the MPB (Case 4) in the case of MPB+. The rest of the
+channel communications were either local or were using the shared memory to
+transfer the messages. Moreover, in the case of MPB-, immutable inter-core
+messages are transferred over the CSH which is cached.
+
+Second, the cost of inter-core interrupts is substantial, as was observed by
+others~\cite{Peter11,Darko11}. We measured the time it takes between a core
+issuing an inter-core interrupt to the time it sends or receives the first byte
+is around 2000 core cycles. Since majority of the immutable messages exchanged
+between cores are small, the overhead of setting up the message transfer
+outweighs the benefit of using the MPB. However, utilizing the MPB prevents
+immutable messages from being globalized, thus reducing the pressure on the
+shared memory. As a result, the number of expensive shared heap collections are
+reduced.
+
+\section{Related Work}
+
+Over the years, several local collector designs ~\cite{Steele75, Doligez93,
+Steensgaard00, Anderson10} have been proposed for multithreaded programs.
+Recently, variations of local collector design have been adopted for
+multithreaded, functional language runtimes like GHC~\cite{Marlow11} and
+Manticore~\cite{Auhagen11}. Doligez et al.~\cite{Doligez93} proposed a local
+collector design for ML with threads where all mutable objects are allocated
+directly on the shared heap, and immutable objects are allocated in the local
+heap. Similar to our technique, whenever local objects are shared between
+cores, a copy of the immutable object is made in the shared heap. Although this
+design avoids the need for read and write barriers, allocating all mutable
+objects, irrespective of their sharing characteristics can lead to poor
+performance due to increased number of shared collections, and memory access
+overhead due to NUMA effects and uncached shared memory as in the case of SCC.
+It is for this reason we do not treat the shared memory as the oldest
+generation for our local generation collector unlike other
+designs~\cite{Doligez93, Marlow11}.
+
+Several designs utilize static analysis to determine objects that might
+potentially escape to other threads~\cite{Jones05, Steensgaard00}. Objects that
+do not escape are allocated locally, while all others are allocated in the
+shared heap. The usefulness of such techniques depends greatly on the precision
+of the analysis, as objects that might potentially be shared are allocated on
+the shared heap. This is undesirable for architectures like the SCC where
+shared memory accesses are very expensive compared to local accesses. Compared
+to these techniques, our design only exports objects that are definitely shared
+between two or more cores. Our technique is also agnostic to the source
+language, does not require static analysis, and hence can be implemented as a
+lightweight runtime technique.
+
+Anderson~\cite{Anderson10} describes a local collector design (TGC) that
+triggers a local garbage collection on every exporting write of a mutable
+object, while immutable objects, that do not have any pointers, are copied to
+the shared heap. This scheme is a limited form of our cleanliness analysis. In
+our system, object cleanliness neither solely relies on mutability information,
+nor is it restricted to objects without pointer fields. Moreover, TGC does not
+exploit delaying exporting writes to avoid local collections. However, the
+paper proposes several interesting optimizations that are applicable to our
+system. In order to avoid frequent mutator pauses on exporting writes, TGC's
+local collection runs concurrently with the mutator. Though running compaction
+phase concurrently with the mutator would require read barriers, we can enable
+concurrent marking to minimize pause times. TGC also proposes watermarking
+scheme for minimizing stack scanning, which can be utilized in our system to
+reduce the stack scanning overheads during context switches and exporting
+writes of clean objects.
+
+Marlow et al.~\cite{Marlow11} propose exporting only part of the transitive
+closure to the shared heap, with the idea of minimizing the objects that are
+globalized. The rest of the closure is exported essentially on demand during
+the next access from another core. This design mandates the need for a read
+barrier to test whether the object being accessed resides in the local heap of
+another core. However, since the target language is Haskell, there is an
+implicit read barrier on every load, to check whether the thunk has already
+been evaluated to a value. Since our goal is to eliminate read barriers, we
+choose to export the transitive closure on an exporting write.
+
+Software managed cached coherence (SMC)~\cite{SMC} for SCC provides a coherent,
+shared virtual memory to the programmer. However, the distinction between
+private and shared memory still exists and it is the responsibility of the
+programmer to choose data placement. In our system, all data start out as being
+private, and is only shared with the other cores if necessary. The sharing is
+performed both through the shared memory as well as over the MPB, based on the
+nature of message being shared. MESH framework~\cite{Prescher11} provides a
+similar mechanism for flexible sharing policies on the SCC as a middle-ware
+layer.
+
+In the context of mapping first-class channels to MPBs, the work by Prell et
+al.~\cite{Prell12} which presents an implementation of Go's concurrency
+constructs on the SCC is most similar. However, unlike our channel
+implementation, channels are implemented directly on the MPB. Since the size of
+MPB is small, the number of channels that can be concurrently utilized are
+limited. Moreover, their implementation diverges from Go language specification
+in that the go-routines running on different cores run under different address
+spaces. Hence, the result of transferring a mutable object over the channels is
+undefined. Our channel communication utilizes both shared memory and the MPBs
+for inter-core messaging. Barrelfish on the SCC~\cite{Peter11} uses MPBs to
+transfer small messages and bulk transfer is achieved through shared memory.
+However, Barrelfish differs from our system since it follows a shared-nothing
+policy for inter-core interaction.
+
+\section{Concluding Remarks}
+
+The Intel SCC provides an architecture that combines aspects of distributed
+systems (no cache coherence) with that of a shared memory machine, with support
+for programmable cache coherence and fast inter-core messaging. In order to
+effectively utilize this architecture, it is desirable to hide the complexity
+behind the runtime system. To this end, the \MMSCC programming platform
+provides a cache coherent shared memory abstraction for the ML programmer.
+\MMSCC utilizes the mostly-functional and highly concurrent nature of the
+programming model to implement a memory management scheme that is optimized for
+the memory hierarchy found on the SCC. The results and experience building
+\MMSCC illustrate that functional programming language technology can mitigate
+the burden of developing software for highly scalable manycore systems.

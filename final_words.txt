@@ -1,0 +1,13 @@
+MultiMLton
+----------
+* Scheduler
+* IO manager
+* Data parallel extensions
+* Heterogeneity
+* Other GC focus, latency, real-time nature.
+
+
+RxCml
+-----
+* Fault-tolerance
+* Recover from persistent errors

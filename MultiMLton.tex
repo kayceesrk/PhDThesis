@@ -220,17 +220,18 @@ additional compiler primitives for concurrency support. \MM is a whole-program
 optimizing compiler for the full SML 97 language~\cite{SML97}, including
 modules and functors. During compilation, \MM first transforms the source
 program with modules and functors into an equivalent one without by
-defunctorization~\cite{}. Defunctorization duplicates each functor at every
-application and eliminates structures by renaming variables. Next, the program
-is monomorphized~\cite{} by instantiating the polymorphic datatypes and
-functions at every application. Finally, the program is defunctionalized,
-replacing the higher-order functions with data structures to represent them and
-first-order functions to apply them. The resultant intermediate language is in
-Static Single Assignment (SSA) form~\cite{SSA}. Much of the aggressive
-optimizations are performed in SSA passes. The SSA code is then transformed to
-RSSA intermediate representation. RSSA is similar SSA, but exposes data
-representations decisions that leads to further optimizations. The compiler can
-produce native code for multiple backends as well as portable C output.
+defunctorization~\cite{ElsmanPhD}. Defunctorization duplicates each functor at
+every application and eliminates structures by renaming variables. Next, the
+program is monomorphized~\cite{Reynolds1972} by instantiating the polymorphic
+datatypes and functions at every application. The program is then
+defunctionalized, replacing the higher-order functions with data structures to
+represent them and first-order functions to apply them. The resultant
+intermediate language is in Static Single Assignment (SSA)
+form~\cite{Bilardi2003}. Much of the aggressive optimizations are performed in
+SSA passes. The SSA code is then transformed to RSSA intermediate
+representation. RSSA is similar SSA, but exposes data representations decisions
+that leads to further optimizations. The compiler can produce native code for
+multiple backends as well as portable C output.
 
 \section{Runtime System}
 
