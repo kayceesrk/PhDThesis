@@ -1126,6 +1126,7 @@
 \newenvironment{proof}{\begin{Proof}\rm}{\hfill \usebox{\proofbox} \end{Proof}}
 \newtheorem{proposition}{Proposition}[section]
 \newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
 \renewcommand{\section}{%
   \@startsection
     {section}%

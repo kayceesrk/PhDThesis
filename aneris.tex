@@ -27,25 +27,24 @@ coherent address space on the SCC, optimizing for the SCC's memory hierarchy.
 We begin with a \emph{local collector}\footnote{Other terms have been used in
 the literature to indicate similar heap designs, notably private nursery, local
 heap collector, thread-local or thread-specific heap, and on-the-fly
-collection.} (\lc)
-design~\cite{Steele75,Doligez93,Steensgaard00,Anderson10,Marlow11,Auhagen11}
-that partitions the heap into local heaps on each core and a shared heap for
-cross-core communication. However, we observe that the cost of memory barriers
-utilized in preserving the heap invariants have significant costs. To
-eliminitate theses costs, we propose a new GC design (\prc) that utilizes the
-ample concurrency offered by our programming model combined with a dynamic
-shape analysis to eliminate some of the GC overheads. This naturally leads to a
-GC design that focuses on \emph{procrastination}~\cite{mmgc}, delaying writes
-that would necessitate establishing forwarding pointers until a GC, where there
-is no longer a need for such pointers. The GC leverages the mostly functional
-nature of ACML programs and a new object property called \emph{cleanliness},
-which enables a broad class of objects to be moved from a local to a shared
-heap without requiring a full traversal of the local heap to fix existing
-references; cleanliness enables an important optimization that achieves the
-effect of procrastination without actually having to initiate a thread stall.
-Our final design (\smc) integrates SCC's support for software-managed cache
-coherence (SMC)~\cite{SMC} into the extant memory barriers to improve the
-design further.
+collection.} (\lc) design~\cite{Steele75, Doligez93, Steensgaard00, Anderson10,
+Marlow11, Auhagen11} that partitions the heap into local heaps on each core and
+a shared heap for cross-core communication. However, we observe that the cost
+of memory barriers utilized in preserving the heap invariants have significant
+costs. To eliminitate theses costs, we propose a new GC design (\prc) that
+utilizes the ample concurrency offered by our programming model combined with a
+dynamic shape analysis to eliminate some of the GC overheads. This naturally
+leads to a GC design that focuses on \emph{procrastination}~\cite{mmgc},
+delaying writes that would necessitate establishing forwarding pointers until a
+GC, where there is no longer a need for such pointers. The GC leverages the
+mostly functional nature of ACML programs and a new object property called
+\emph{cleanliness}, which enables a broad class of objects to be moved from a
+local to a shared heap without requiring a full traversal of the local heap to
+fix existing references; cleanliness enables an important optimization that
+achieves the effect of procrastination without actually having to initiate a
+thread stall. Our final design (\smc) integrates SCC's support for
+software-managed cache coherence (SMC)~\cite{SMC} into the extant memory
+barriers to improve the design further.
 
 We begin by discussing in detail the architecture and programming model of the
 SCC, which serves as our prototype non cache coherent architecture. However,
