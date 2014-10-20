@@ -165,6 +165,7 @@ commentstyle=\itshape\color{MidnightBlue},
 
 
 \chapter{\rxcml: A Prescription for Safely Relaxing Synchrony}
+\label{chap:rxcml}
 
 Concurrent ML~\cite{Reppy07} (CML) provides an expressive concurrency mechanism
 through its use of first-class composable synchronous events.  When
@@ -481,7 +482,7 @@ We introduce an axiomatic formalization for reasoning about the relaxed
 behaviors of a concurrent message-passing programs with dynamic thread
 creation. Not surprisingly, our formulation is similar in structure to
 axiomatic formalizations used to describe, for example, relaxed memory
-models~\cite{BMM,Sarkar09,Sewell10}.
+models~\cite{Demange2013,Sarkar2011,Sewell2010}.
 
 An \emph{axiomatic execution} is captured by a set of \emph{actions} performed
 by each thread and the relationship between them. These actions abstract the
@@ -1454,7 +1455,7 @@ continue with their transactions without waiting for the lock server to
 respond.
 
 In this figure, serializability violations are captured as a cycle in the
-dependence graph, represented by the dotted edges. \rxcml\ rejects such
+dependence graph, represented by the dotted edges. \rxcml rejects such
 executions, causing the transaction to abort, and be re-executed
 non-speculatively.
 
@@ -1481,15 +1482,15 @@ benchmark. Lower is better.}
 
 The performance results are presented in the Figure~\ref{grf:oltp}. The number
 of clients concurrently issuing transaction requests was increased from 1 to
-48. \rxcml\ is the speculative version, while Sync is the synchronous,
+48. \rxcml is the speculative version, while Sync is the synchronous,
 non-speculative variant. The 1-client Sync version took 1220 seconds to
 complete. For comparison, we extended the original C version with a similar
 shared distribution structure. This run was 1.3$\times$ faster than the CML
-baseline. The benchmark execution under \rxcml\ scales much better than the
-Sync version due to optimistic transactions. With 48 clients, \rxcml\ version
+baseline. The benchmark execution under \rxcml scales much better than the
+Sync version due to optimistic transactions. With 48 clients, \rxcml version
 was 5.8$\times$ faster than then Sync version. Under \rxcml, the number of
 transaction conflicts does increase with the number of clients. With 48
-clients, 9\% of the transactions executed under \rxcml\ were tagged as
+clients, 9\% of the transactions executed under \rxcml were tagged as
 conflicting and re-executed non-speculatively.  This does not, however,
 adversely affect scalability.
 
@@ -1614,7 +1615,7 @@ operations, 85\%(15\%) of which are insertions(deletions), and 20\% of which
 are concurrent operations. We insert a 25 ms delay between two consecutive
 local operations to simulate user-interaction. Updates from each replica is
 causal atomically broadcasted every 250 ms. Each replica is represented by a
-\rxcml\ instance placed in widely distributed Amazon EC2 availability zones
+\rxcml instance placed in widely distributed Amazon EC2 availability zones
 chosen to capture the geo-distributed nature of collaborative editing. The
 average inter-instance latency was 173 ms, with a standard deviation of 71.5.
 Results are reported as the average of five runs.
@@ -1631,17 +1632,69 @@ We consider the time taken by a collaborative editing session to be the time
 between the first operation generation and the completion of the last broadcast
 operation, at which point the documents at every replica would have converged.
 Figure~\ref{grf:collab} shows results with respect to total running time. Sync
-represents an ordinary CML execution, while \rxcml\ represents our new
-implementation. With 2-authors, \rxcml\ version took 485 seconds to complete,
+represents an ordinary CML execution, while \rxcml represents our new
+implementation. With 2-authors, \rxcml version took 485 seconds to complete,
 and was 37\% faster than the synchronous version. As we increase the number of
 concurrent authors, the number of communication actions per broadcast operation
 increases.  Hence, we expect the benchmark run to take longer to complete. The
 non-speculative version scales poorly due to the increasing number of
 synchronizations involved in the broadcast operations. Indeed, Sync is
-7.6$\times$ slower than \rxcml\ when there are six concurrent authors. Not
-surprisingly, \rxcml\ also takes longer to complete a run as we increase the
+7.6$\times$ slower than \rxcml when there are six concurrent authors. Not
+surprisingly, \rxcml also takes longer to complete a run as we increase the
 number of concurrent authors. This is because of increasing communication
 actions per broadcast as well as increase in mis-speculations. However, with
 six authors, it only takes 1.67$\times$ longer to complete the session when
 compared to having just two authors, and illustrates the utility of speculative
 communication.
+
+\section{Related Work}
+
+Causal-ordering of messages is considered an important building
+block~\cite{Birman87} for distributed applications. Similar to our formulation,
+Charron-Bost \emph{et al.}~\cite{Charron-Bost96} develop an axiomatic
+formulation for causal-ordered communication primitives, although their focus
+is on characterizing communication behavior and verifying communication
+protocols, rather than latency hiding. Speculative execution has been shown to
+be beneficial in other circumstances under high latency environments such as
+distributed file systems~\cite{Nightingale05}, asynchronous virtual machine
+replication~\cite{Cully08}, state machine replication~\cite{Wester09}, deadlock
+detection~\cite{Li05} etc., although we are unaware of other attempts to use it
+for transparently converting synchronous operations to asynchronous ones.
+
+Besides Erlang~\cite{erlang}, there are also several distributed
+implementations of functional languages that have been
+proposed~\cite{DCaml,Acute}.  More recently, Cloud Haskell~\cite{CloudHaskell}
+has been proposed for developing distributed Haskell programs. While all these
+systems deal with issues such as type-safe serialization and fault tolerance
+central to any distributed language, \rxcml's focus is on enforcing equivalence
+between synchronous and asynchronous evaluation. The formalization used to
+establish this equivalence is inspired by work in language and hardware memory
+models~\cite{Sewell2010,Demange2013,Boehm08}.  These efforts, however, are
+primarily concerned with visibility of shared-memory updates, rather than
+correctness of relaxed message-passing behavior. Thus, while language memory
+models~\cite{Boehm08,Demange2013} are useful in reasoning about compiler
+optimizations, our relaxed communication model reasons about safe asynchronous
+manifestations of synchronous protocols.
+
+Transactional events(TE)~\cite{Donnelly06,Effinger-Dean08} combine first-class
+synchronous events with an all-or-nothing semantics.  They are strictly more
+expressive than CML, although such expressivity comes at the price of an
+expensive runtime search procedure to find a satisfiable schedule.
+Communicating memory transactions (CMT)~\cite{Lesani11} also uses speculation
+to allow asynchronous message-passing communication between shared-memory
+transactions, although CMT does not enforce any equivalence with a synchronous
+execution. Instead, mis-speculations only arise because of a serializability
+violation on memory.
+
+\section{Concluding Remarks}
+
+CML provides a simple, expressive, and composable set of synchronous event
+combinators that facilitate concurrent programming, albeit at the price of
+performance, especially in high-latency environments. This paper shows how to
+regain this performance by transparently implementing synchronous operations
+asynchronously, effectively treating them as speculative actions.  We formalize
+the conditions under which such a transformation is sound, and describe a
+distributed implementation of CML called \rxcml that incorporates these ideas.
+Our reported case studies illustrate the benefits of our approach, and provide
+evidence that \rxcml is a basis upon which we can build clean, robust, and
+efficient distributed CML programs.
