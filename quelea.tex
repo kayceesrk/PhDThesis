@@ -847,4 +847,390 @@ provides multiple consistency levels is presented in the next section.
 \section{Operational Semantics}
 \label{q_sec:meta-theory}
 
+\section{Transaction Contracts}
+\label{q_sec:txns}
 
+While contracts on individual operations offer the programmer object-level
+declarative reasoning, real-world scenarios often involve operations that span
+multiple objects. In order to address this problem, several recent
+systems~\cite{Walter,Burckhardt2012,BailisHAT} have proposed eventually
+consistent transactions in order to compose operations on multiple objects.
+However, given that classical transaction models such as serializability and
+snapshot isolation require inter-replica coordination, these systems espouse
+\emph{coordination-free transactions} that remain available under network
+partitions, but only provide weaker isolation guarantees. Coordination-free
+transactions have intricate consistency semantics and widely varying runtime
+overheads. As with operation-level consistency, the onus is on the programmer
+to pick the correct transaction kind. This choice is further is complicated by
+consistency semantics of individual operations.
+
+\subsection{Syntax and Semantics Extension}
+\label{q_sec:syn_sem_ext}
+
+\quelea automates the choice of assigning the correct and most efficient
+transaction isolation level. Similar to contracts on individual operations, the
+programmer associates contracts with transactions, declaratively expressing its
+consistency specification. We extend the contract language with a new term
+under quantifier-free propositions - ${\small \txnZ}~S_1~S_2$, where $S_1$ and
+$S_2$ are sets of effects, and introduce a new primitive equivalence relation
+$\small \sametxnZ$ that holds for effects from the same transaction. $\small
+\txn{a,b}{c,d}$ is just syntactic sugar for $\small \sametxn{a}{b} ~\wedge~
+\sametxn{c}{d} ~\wedge~ \neg\sametxn{a}{c}$, where $a$ and $b$ considered to
+belong to the \emph{current} transaction.
+
+We assume that operations not part of any transaction belong to their own
+unique transaction. While transactions may have varying isolation guarantees,
+we make the standard assumption that all transactions provide atomicity. Hence,
+we include the following axioms in $\Delta$:
+
+\begin{itemize}
+\item Same transactions is an equivalence relation:
+	\begin{itemize}
+	\item $\forall a.~\sametxn{a}{a}$.
+	\item $\forall a,b.~\sametxn{a}{b} \Rightarrow \sametxn{b}{a}$.
+	\item $\forall a,b,c.~\sametxn{a}{b} ~\wedge~ \sametxn{b}{c} \Rightarrow \sametxn{a}{c}$.
+	\end{itemize}
+\item Atomicity of transaction:
+	\begin{itemize}
+	\item $\forall a,b,c.~\txn{a}{b,c} ~\wedge~ \sameobj{b}{c} ~\wedge~ \vis{b}{a} \Rightarrow \vis{c}{a}$.
+	\end{itemize}
+\item Transaction does not span across sessions:
+	\begin{itemize}
+	\item $\forall a,b.~\sametxn{a}{b} \Rightarrow \so{a}{b} ~\vee~ \so{b}{a} ~\vee~ a = b$.
+	\end{itemize}
+\item Transactions are contiguous:
+	\begin{itemize}
+	\item $\forall a,b,c~\sametxn{a}{c} ~\wedge~ \so{a}{b} ~\wedge~ \so{b}{c} \Rightarrow \sametxn{a}{b}$.
+	\end{itemize}
+\end{itemize}
+
+\noindent The semantics of the atomicity axiom is illustrated in
+Figure~\ref{fig:txn_atomicity}.
+
+\subsection{Transactional Bank Account}
+
+In order to illustrate the utility of declarative reasoning for transactions,
+consider an extension of our running example to use two accounts (objects) --
+current ($c$) and savings ($s$). Each account provides operations
+\cf{withdraw}, \cf{deposit} and \cf{getBalance}, with the same contracts as
+defined previously. We consider two transactions -- \cf{save(amt)}, which
+transfers \cf{amt} from current to savings, and \cf{totalBalance}, which
+returns the sum of the balances of individual accounts. The \quelea code for the
+transactions is given below:
+
+\hspace{1em}
+\begin{minipage}[t]{0.4\columnwidth}
+\begin{codehaskell}
+save amt =
+  x <- dollar(classify $\cv_{sv}$)
+  atomically x dollar do
+    b <- withdraw c amt
+    when b dollar deposit s amt
+\end{codehaskell}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.4\columnwidth}
+\begin{codehaskell}
+totalBalance =
+  x <- dollar(classify $\cv_{tb}$)
+  atomically x dollar do
+    b1 <- getBalance s
+    b2 <- getBalance s
+    return b1 + b2
+\end{codehaskell}
+\end{minipage}
+\hspace{1em}
+
+$\cv_{sv}$ and $\cv_{tb}$ are the contracts on the corresponding
+transactions. The function \cf{classify} assigns the contracts
+\emph{statically} to one of the transaction isolation levels offered by the
+store; \cf{\$()} is meta-programming syntax for splicing the result into the
+program. The \cf{atomically} construct invokes the enclosing operations at the
+given isolation level $x$, ensuring that the effects of the operations are made
+visible atomically. Our goal is to ensure that \cf{totalBalance} returns the
+result obtained from a consistent snapshot of the object states.
+
+While making both transactions serializable would ensure correctness,
+distributed stores rarely offer serializable transactions since it is
+unavailable and hinders scalability~\cite{BailisHAT}. As we will see, these
+transactions can be satisfied with much weaker isolation guarantees. Despite
+the atomicity offered by the transaction, anomalies are still possible. For
+example, the two \cf{getBalance} operations in \cf{totalBalance} transactions
+might be served by different replicas with distinct set of committed \cf{save}
+transactions. If the first(second) \cf{getBalance} operation witness a
+\cf{save} transaction that is not witnessed by the second(first)
+\cf{getBalance} operation, then the balance returned will be less(greater) than
+the actual balance. It is not immediately apparent which weakest isolation
+guarantee will be sufficient to prevent the anomaly.
+
+Instead, \quelea requires the programmer to simply state the consistency
+requirement as a contract. Since we would like both the \cf{getBalance}
+operations to witness the same set of \cf{save} transactions, we define the
+constraint on \cf{totalBalance} transaction $\psi_{tb}$ as:
+\begin{mathpar}
+\begin{array}{l}
+\cv_{tb} = \forall a:\rcf{getBalance}, b:\rcf{getBalance}, \\
+\quad \qquad (c:\rcf{withdraw} \vee \rcf{deposit}), (d:\rcf{withdraw} \vee \rcf{deposit}). \\
+\quad \qquad \txn{a,b}{c,d} ~\wedge~ \vis{c}{a} ~\wedge~ \sameobj{d}{b} \Rightarrow \vis{d}{b}
+\end{array}
+\end{mathpar}
+
+\noindent The key idea in the above definition is that the $\txnZ$ primitive
+allows us to relate operations on different objects. The \cf{save} transaction
+only needs to ensure that the two writes it performs are made visible
+atomically. Since this is ensured by combining them in a transaction, \cf{save}
+does not require any additional constraints, and $\psi_1$ is simply $\small
+\true$.
+
+\subsection{Coordination-free Transactions}
+
+\begin{figure}[t]
+\centering
+\subfigure[Atomicity]{\label{fig:txn_atomicity}\includegraphics[width=0.3\columnwidth]{Figures/TxnAtomic}}
+\hfill
+\subfigure[Monotonic Atomic View]{\label{fig:txn_mav}\includegraphics[width=0.3\columnwidth]{Figures/TxnMAV}}
+\hfill
+\subfigure[Repeatable Read]{\label{fig:txn_rr}\includegraphics[width=0.3\columnwidth]{Figures/TxnRR}}
+\caption{Semantics of transaction contracts. $x$ and $y$ are distinct objects.
+The dotted line represents the visibility requested by the contracts.}
+\label{fig:transaction}
+\end{figure}
+
+In order to illustrate the utility of transaction contract classification, we
+identify three well-understood coordination-free transaction semantics -- Read
+Committed (RC)~\cite{Berenson95}, Monotonic Atomic View (MAV)~\cite{BailisHAT}
+and Repeatable Read (RR)~\cite{Berenson95}, and illustrate the classification
+strategy. Our technique can indeed be applied to a different isolation level
+lattice.
+
+A transaction with ANSI RC semantics only witnesses committed operations. Let
+us assume that the store buffers updates until all the updates from the
+transaction are available at a replica. If the transaction commits, the
+buffered updates are made visible. Otherwise, the buffered updates are
+discarded. RC does not entail any further isolation guarantees. Hence, a store
+implementing RC does not require inter-replica coordination. We can express RC
+as follows:
+\begin{mathpar}
+\begin{array}{l}
+\rcc = \forall a,b,c.~\txn{a}{b,c} \wedge \sameobj{b}{c} ~\wedge~ \vis{b}{a} \Rightarrow \vis{c}{a}
+\end{array}
+\end{mathpar}
+
+\noindent Notice that the above definition is the same as the atomicity
+guarantee of transaction described in Section~\ref{q_sec:syn_sem_ext}. The
+\cf{save} is an example for RC transaction.
+
+MAV semantics ensures that if some operation in a transaction $T_1$ witnesses
+the effects of another transaction $T_2$, then subsequent operations in $T_1$
+will also witness the effects of $T_2$. MAV semantics is useful for
+maintaining the integrity of foreign key constraints, materialized views and
+secondary updates. In order to implement MAV, a store only needs to keep track
+of the set of transactions $S_t$ witnessed by the running transaction, and
+before performing an operation at some replica, ensure that the replica
+includes all the transactions in $S_t$. Hence, MAV is coordination-free. MAV
+semantics is captured with the following contract:
+\begin{mathpar}
+\begin{array}{l}
+\mavc = \forall a,b,c,d.~\txn{a,b}{c,d} ~\wedge~ \so{a}{b} ~\wedge~ \vis{c}{a} ~\wedge~ \sameobj{d}{b} \Rightarrow \vis{d}{b}
+\end{array}
+\end{mathpar}
+
+\noindent whose semantics is illustrated in the Figure~\ref{fig:txn_mav}.
+
+ANSI RR semantics requires that the transaction witness a snapshot of the data
+store state. Importantly, this snapshot can be obtained from any replica, and
+hence RR is coordination-free. An example for such a transaction is the
+\cf{totalBalance} transaction. The semantics of RR is captured by the following
+contract:
+\begin{mathpar}
+\begin{array}{l}
+\rrc = \forall a,b,c,d.~\txn{a,b}{c,d} ~\wedge~ \vis{c}{a} ~\wedge~ \sameobj{d}{b} \Rightarrow \vis{d}{b}
+\end{array}
+\end{mathpar}
+
+\noindent whose semantics is illustrated in the Figure~\ref{fig:txn_rr}.
+
+\subsection{Classification}
+
+Similar to operation-level contracts, with respect to $\le$ relation, the
+coordination-free transaction semantics described here form a total order:
+$\rcc \le \mavc \le \rrc$. The transaction classification is also similar to
+the operation-level contract classification presented in
+Figure~\ref{sem:classify}; given a contract $\psi$ on a transaction, we start
+from the weakest transaction contract $\rcc$, and progressively compare its
+strength to the known transaction contracts until we find a isolation level
+under which $\psi$ can be safely discharged. Otherwise, we report a type error.
+
+\section{Implementation}
+\label{q_sec:impl}
+
+\quelea is implemented as a shallow extension of GHC Haskell and runs on top of
+Cassandra, an off-the-shelf eventually consistent distributed data (or backing)
+store responsible for all data management issues (i.e., replication, fault
+tolerance, availability, and convergence).  Template Haskell is used implement
+static contract classification, and proof obligations are discharged with the
+help of the Z3~\cite{Z3} SMT solver. Figure~\ref{fig:impl_mod} illustrates the
+overall system architecture.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.7\columnwidth]{Figures/ImplModel}
+\end{center}
+\caption{Implementation model.}
+\label{fig:impl_mod}
+\end{figure}
+
+Replicated data types and the stronger consistency semantics are implemented
+and enforced in the \emph{shim layer}. Our implementation supports eventual,
+causal, and strong consistency for data type operations, and RC, MAV, and RR
+semantics for transactions.  This functionality is implemented entirely on top
+of the standard interface exposed by Cassandra. From an engineering
+perspective, leveraging an off-the-shelf data store enables an implementation
+comprising roughly only 2500 lines of Haskell code, which is packaged as a
+library.
+
+\subsection{Shim Layer}
+
+The shim layer maintains a causally consistent in-memory snapshot of a subset
+of objects in the backing store, by explicitly tracking dependencies introduced
+between the effects due to visibility, session and same transaction relations.
+The dependence tracking is similar to the techniques presented in~\cite{BoltOn}
+and~\cite{Eiger}, with the usual optimizations making use of transitivity
+properties for minimizing the number of dependencies. Shim layer performs the
+reductions associated with replicated datatype operations corresponding to
+client requests. As the backing store provides durability, convergence and
+fault tolerance, each shim layer node simply acts as a soft-state cache, and
+can safely be terminated at any instant. Similarly, more shim layer nodes can
+be spawned on demand.
+
+\subsection{Operation Consistency}
+
+Every effect generated as a result of an effectful operation on an object
+inserts a new row $(o,e,vis,txn,val)$ into the backing store, where $o$ and $e$
+are object and (unique) effect identifiers, $vis$ is the set of identifiers of
+effects visible to this operation, $txn$ is an optional transaction identifier,
+and $val$ is the value associated with the effect (eg: \cf{Withdraw 50}). The
+shim layer periodically fetches updates from the backing store for those objects
+which were accessed since updates were last fetched. Since causally consistent
+operations require an up-to-date view of the current session, the shim layer
+node synchronously fetches operations if the causally preceding operations in
+the current session are not available in the cache.  Strongly consistent
+operations are performed after obtaining exclusive leases on objects. The lease
+mechanism is implemented with the help of Cassandra's support for conditional
+updates and expiring columns.
+
+\subsection{Transactions}
+
+While Cassandra offers all-or-nothing failure semantics for multiple writes
+through batching, readers may witness the initial write while the batch is in
+progress. \quelea implements atomic visibility by exploiting shim layer causality
+guarantee -- an effect is included only if all the effects if depends on are
+also included.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=0.7\columnwidth]{Figures/AtomicityImpl}
+\end{center}
+\caption{Implementing atomicity semantics. Dotted circle represents effects not yet inserted into the backing store.}
+\label{fig:atomicity_impl}
+\end{figure}
+
+Consider the example given in Figure~\ref{fig:atomicity_impl}. For every
+transaction in \quelea, we instantiate a special transaction marker effect $m$.
+But importantly, do not insert into the backing store. $m$ is included as a
+dependence to every effect generated in the transaction. In the figure, the
+graph on the left shows the state of the store in the middle of a transaction.
+Each circle represents an effect. The dotted circle indicates that the effect
+has been instantiated, but has not yet been inserted into the store. Since the
+causally preceding effect $m$ has not yet been written to the store, no
+operation will witness $e1$ and $e2$ while the transaction in progress. After
+the transaction has finished execution, we insert $m$ into the backing store,
+marking all the effects from the transactions as a depedence for $m$. Now any
+replica which includes one of the effects from the transaction must include
+$m$, and transitively must include every effect from the transaction. This
+ensures atomicity and satisfies the RC requirement.
+
+The above scheme prevents a transaction from witnessing its own effects. This
+might conflict with the causality requirement on the operations. Hence,
+transactions piggy-back the previous effects from the same transaction for each
+request. MAV semantics is implemented by keeping track of the set of
+transaction markers $M$ witnessed by the transaction, and before performing an
+operation at some replica, ensuring that $M$ is a subset of the transaction
+markers included at that replica. If not, the missing effects are synchronously
+fetched. RR semantics is realized by capturing a optimized snapshot of the
+state of some replica; each operation from an RR transaction is applied to this
+snapshot state. Any generated effects are added to this snapshot.
+
+\subsection{Summarization}
+
+The main challenge in realizing an efficient implementation of operation-based
+replicated data types is that the state of the object i.e., the set of effects
+grows with every effectful operation on the object. If left unchecked, the
+operations slow down over time, until the shim layer memory or backing store
+disk runs out of memory. Luckily, the state of the operation-based replicated
+data type can often be summarized to an \emph{observably equivalent} smaller
+state. For example,
+
+\begin{itemize}
+\setlength{\itemsep}{2pt}
+\item A last-writer-wins register with multiple updates where $v$ is the value
+of the last write is observably equivalent to a register with a single write
+$v$.
+
+\item A bank account with a series of deposits and withdraws with current
+balance $b$ is equivalent to a bank account with a single deposit of $b$.
+
+\item A set with collection of add and remove operations is equivalent to a set
+with a series of add operations of live elements from the original set.
+\end{itemize}
+
+Since the semantics of summarization depends on the semantics of the data type,
+we expect the programmer to provide a summarization function for each RDT with
+the following type:
+
+\begin{codehaskell}
+summarize :: [e] -> [e]
+\end{codehaskell}
+
+\noindent with the intention that the length of the result is smaller that the
+length of the argument. We utilize the \cf{summarize} function to summarize the
+object state both in the shim layer node and the backing store, typically when
+the number of effects on an object crosses a tunable threshold. Shim layer
+summarization is straight-forward; a summarization thread takes the local lock
+on the object, and replaces its state with the summarized state. The shim layer
+node remains unavailable for that particular object during summarization
+(usually a few milliseconds).
+
+Compared to the shim layer, summarization in the backing store is more
+complicated. The main challenge is that unlike the shim layer, summarization
+cannot run as an atomic operation. Summarization in the backing store involves
+deleting previously inserted rows and inserting new rows, where each row
+corresponds to an effect. It is essential that concurrent client operations are
+permitted, but are not allowed to witness the intermediate state of the
+summarization process.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=0.7\columnwidth]{Figures/SumDisk}
+\end{center}
+\caption{Summarization in the backing store. Dotted circle represents effects not yet inserted into the backing store.}
+\label{fig:impl_sum_disk}
+\end{figure}
+
+To this end, we adopt a novel summarization strategy that builds on the
+causality property of the store. Figure~\ref{fig:impl_sum_disk} illustrates the
+summarization strategy. Suppose the original set of effects on an object are
+$o1$, $o2$ and $o3$. Whe summarized, the new effects yielded are $n1$ and $n2$.
+We first instantiate a summarization marker $s$, and similar to transaction
+marker, we do not insert it into the store immediately. We insert the new
+effects $n1$ and $n2$, with strong consistency, including $s$ as a dependence.
+Since $s$ is not yet in the store, the new effects are not made visible to the
+clients. Then we insert $s$ with strong consistency, including the original
+effects $o1$, $o2$ and $o3$ as dependence. Strongly consistent insertions
+ensure that a shim layer node witnessing $s$ on some object must also witness
+$n1$ and $n2$ on the same object. A shim layer node which witnesses all the
+effects removes the original effects from its cache since they are superseded
+by the new effects. Finally, the old effects are deleted from the backing
+store. This process ensures that clients either witness the old or the new
+effects, but not both; the summarization process appears to be atomic from the
+clients perspective.
