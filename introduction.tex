@@ -379,10 +379,11 @@ properties. The contract language is used to express valid concurrent
 executions utilizing a particular replicated data type, over a small corpus of
 primitive relations, capturing properties such as visibility and session order.
 The executions described are similar to the the axiomatic description of
-relaxed memory models~\cite{Demange2013}, declaratively capturing the
-well-formed behaviors in the program. Given a set of store-level consistency
-guarantees, also expressed in the same contract language, we statically map
-each datatype operation to one of the store-level consistency properties.
+relaxed memory models~\cite{Demange2013,Burckhardt2014}, declaratively
+capturing the well-formed behaviors in the program. Given a set of store-level
+consistency guarantees, also expressed in the same contract language, we
+\emph{statically} map each datatype operation to one of the store-level
+consistency properties.
 
 Finally, our implementation of the \quelea programming model not only supports
 primitive operations, but also a series of \emph{coordination-free
