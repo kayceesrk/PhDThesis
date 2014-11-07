@@ -24,7 +24,7 @@ commentstyle=\itshape\color{MidnightBlue},
 
 %Formatting Commands
 %-------------------
-\renewcommand{\R}[1]{\textrm{#1}}
+\newcommand{\R}[1]{\textrm{#1}}
 \renewcommand{\k}[1]{\mathtt{#1}} % Code font in math mode.
 %\newcommand{\code}[1]{\,{\tt #1}\,}
 \newcommand{\tab}{\hspace*{1.5em}}
@@ -1026,12 +1026,11 @@ on the same thread.  The prohibition of such behavior is encapsulated within
 the definition of well-formedness found in the antecedent of the {\sc
   Commit} rule that we formalize below.
 
-We reason about sensible (well-formed) relaxed executions by
-transforming them into an equivalent axiomatic one.  A well-formed
-$\rel$ execution is one whose corresponding axiomatic execution is
-well-formed. Since an axiomatic semantics is parameterized by an
-intra-thread semantics, we first provide a translation that produces
-this semantics given the transitions defined by the operational
+We reason about sensible (well-formed) relaxed executions by transforming them
+into an equivalent axiomatic one.  A well-formed $\rel$ execution is one whose
+corresponding axiomatic execution is well-formed. Since an axiomatic semantics
+is parameterized by an intra-thread semantics, we first provide a translation
+that produces this semantics given the transitions defined by the operational
 semantics.
 
 \begin{definition}[Intra-thread semantics]

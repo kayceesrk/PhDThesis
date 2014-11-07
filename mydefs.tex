@@ -48,8 +48,6 @@
 \newcommand{\rxcml}{\ftextrecipe$^{\mbox{\tiny\sc CML}}$\xspace}
 \newcommand{\acml}{ACML\xspace}
 
-\newcommand{\loud}[1]{\textbf{\textit{#1}}}
-
 \lstset{ %
 language=ML, % choose the language of the code
 basicstyle=\footnotesize\ttfamily,       % the size of the fonts that are used for the code
@@ -189,7 +187,7 @@ commentstyle=\itshape\color{MidnightBlue},
 \newcommand{\lam}[2]{\lambda\,#1.#2}
 \newcommand{\ThreadMap}{{\cal T}}
 \newcommand{\ChannelMap}{{\cal C}}
-\newcommand{\R}{{\cal R}}
+%%\newcommand{\R}{{\cal R}}
 \newcommand{\threads}[2]{\ThreadMap[#1 \mapsto #2]}
 \newcommand{\channels}[2]{\ChannelMap[#1 \mapsto #2]}
 \newcommand{\async}[1]{\k{spawnParasite}(#1)}
@@ -235,3 +233,5 @@ commentstyle=\itshape\color{MidnightBlue},
 \par\noindent\begin{nop}\footnotesize\begin{align*}}{
 \end{align}\end{nop}\ignorespacesafterend}
 \newcommand{\mfbox}[1]{\fbox{${#1}$}}
+
+
