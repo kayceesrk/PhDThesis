@@ -650,7 +650,7 @@ reasoning about an execution's correctness will require us to specify these
 actions as well. To facilitate this reasoning, we abstract the intra-thread
 semantics, and parameterize our definition of an axiomatic execution accordingly.
 
-\subsubsection{Intra-thread semantics} The intra-thread semantics is abstracted
+\subsubsection{Intra-Thread Semantics.} The intra-thread semantics is abstracted
 in our formulation via a labeled transition system.  Let $\intrastate$ denote
 the intra-thread state of a thread; its specific structure is not interesting
 for the purposes of the axiomatic definition. A labeled transition between
@@ -1301,7 +1301,7 @@ in~\cite{Ziarek10} assumes a centralized structure, and a global barrier that
 stops all execution while a checkpoint is restored; neither condition is
 reasonable in a high-latency, distributed environment.
 
-\subsubsection{Replicated dependence graph.} Instead, \rxcml exploits the
+\subsubsection{Replicated Dependence Graph.} Instead, \rxcml exploits the
 broadcast nature of the match message (Section~\ref{sec:comm_mgr}) to
 incrementally construct a globally-consistent replica of the dependence graph
 at every instance. The nodes in the dependence graph correspond to the actions
@@ -1310,7 +1310,7 @@ allow other instances to add necessary nodes and edges. Maintaining a replica
 of the dependence graph at each replica allows ill-formed executions to be
 detected locally and remediated.
 
-\subsubsection{Well-formedness check.} To ensure observable behavior of an
+\subsubsection{Well-formedness Check.} To ensure observable behavior of an
 \rxcml program to its synchronous equivalent, the compiler automatically
 inserts a \emph{well-formedness check} before observable actions in the
 program. \rxcml treats system calls, access to mutable references, and foreign
@@ -1360,7 +1360,7 @@ progress. Finally, we leverage ZeroMQ's guarantee on FIFO ordered delivery of
 messages to ensure that messages in-flight during the remediation process are
 properly accounted for.
 
-\subsection{Handling full CML}
+\subsection{Handling Full CML}
 
 Our discussion so far has been limited to primitive {\tt send} and {\tt
 recv} operations. \rxcml also supports base events, {\tt wrap}, {\tt

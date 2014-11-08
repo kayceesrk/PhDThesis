@@ -12,9 +12,9 @@ compute platforms such as Windows Azure~\cite{Calder2011} and Amazon’s
 EC2~\cite{EC2}. These services tend to be concurrently accessed by millions of
 users, increasingly through multicore-capable mobile and desktop devices.
 
-\section{The problem}
+\section{The Problem}
 
-\subsection{Strong consistency}
+\subsection{Strong Consistency}
 
 The holy grail of programming such massively parallel systems is to achieve
 good scalability without falling prey to the usual pitfalls of concurrency such
@@ -29,7 +29,7 @@ extension of uniprocessor memory model to a multiprocessor setting. While this
 strong consistency does not completely eliminate the possibility of concurrency
 bugs, it certainly simplifies reasoning about the behavior concurrent programs.
 
-\subsection{Implications of the programming model}
+\subsection{Implications of the Programming Model}
 
 Our definition of strong consistency applies equally to the two popular
 paradigms of concurrent program design, \emph{shared memory} and
@@ -62,7 +62,7 @@ paradigm over message passing. Hence, strong memory consistency equally
 benefits programmers working under either paradigms. Conversely, and more
 importantly, any weaker memory consistency semantics affects both paradigms.
 
-\subsection{Realizing strong consistency}
+\subsection{Realizing Strong Consistency}
 
 Depending upon the target platform, a variety of mechanisms have been proposed
 to achieve strong consistency. Shared memory multicore processors designed for
@@ -87,7 +87,7 @@ example, models such as sequential consistency~\cite{Lam79},
 linearizability~\cite{Herlihy1990} and serializability~\cite{Serializability}
 are widely used in the construction of concurrent programs.
 
-\subsection{Cost of strong consistency}
+\subsection{Cost of Strong Consistency}
 
 Despite the simplicity of strong consistency, with increasing scale, providing
 strong consistency guarantees is an increasingly difficult endeavour. Already,
@@ -130,7 +130,7 @@ geo-distributed setting while processing client requests defeats the whole
 purpose of geo-distribution, which is to minimize latency by serving clients
 from the closest data center.
 
-\subsection{Challenges of weak consistency}
+\subsection{Challenges under Weak Consistency}
 
 In response to these concerns, scalable compute platforms eschew strong
 consistency, and instead rely only on weaker consistency guarantees. Without
@@ -211,7 +211,7 @@ requirements to consistency levels offered by the geo-distributed data store.
 In this section, we provide a brief overview of the contributions made by this
 dissertation.
 
-\subsection{Efficiently hiding the absence of cache coherence}
+\subsection{Efficiently Masking the Absence of Cache Coherence}
 
 The first contribution of this thesis is a series of techniques to efficiently
 hide the absence of cache coherence on a non cache coherent architecture, and
@@ -260,7 +260,7 @@ software managed cache coherence and on-die message-passing interconnect to
 achieve an efficient implementation under which 99\% of the memory accesses can
 potentially be cached.
 
-\subsection{A prescription for safely relaxing synchrony}
+\subsection{A Prescription for Safely Relaxing Synchrony}
 
 The second contribution of the thesis is \rxcml, an optimistic variant of
 Concurrent ML~\cite{Reppy99}. \rxcml utilizes synchronous communication over
@@ -308,7 +308,7 @@ checkpoint-recovery mechanism to detect and remediate mis-speculations. Our
 experiments on Amazon EC2 validate our thesis that this technique is quite
 useful in practice.
 
-\subsection{Declarative programming for eventual consistency}
+\subsection{Declarative Programming over Eventually Consistent Data Stores}
 
 The final contribution of this thesis addresses two related challenges when
 programming under eventual consistency on top of geo-distributed stores:
@@ -395,7 +395,7 @@ programming model for eventually consistent stores not only enables expressive
 declarative reasoning, but is also practically achievable on top of
 industrial-strength geo-distributed stores.
 
-\section{Road map}
+\section{Road Map}
 
 The rest of the dissertation is organized as follows. Chapter~\ref{chap:mm}
 describes the \MM programming model and runtime system, which serves as the

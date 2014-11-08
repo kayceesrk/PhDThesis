@@ -238,7 +238,7 @@ or more cores, are expected to live longer than a typical object collected
 during generational collection. Secondly, shared heap collection requires
 global synchronization, and it is wise to perform such collections rarely.
 
-\subsection{Remembered stacks}
+\subsection{Remembered Stacks}
 
 In \MM threads can synchronously or asynchronously communicate with each other
 over first-class message-passing communication channels. If a receiver is not
@@ -378,6 +378,9 @@ time executing read barriers for our benchmarks.
 
 \begin{table}[t]
 \begin{center}
+\caption{Effectiveness of read barrier checks: RB invocations represents the
+average number of read barrier invocations and forwarded represents the average
+number of instances when the read barrier encountered a forwarded object.}
 \begin{tabular} {|l|r|r|}
 \hline
 {\bf Benchmark} & {\bf RB invocations ($\times 10^6$)} & {\bf Forwarded}\\
@@ -393,9 +396,6 @@ time executing read barriers for our benchmarks.
 \hline
 \end{tabular}
 \end{center}
-\caption{Effectiveness of read barrier checks: RB invocations represents the
-average number of read barrier invocations and forwarded represents the average
-number of instances when the read barrier encountered a forwarded object.}
 \label{tab:rb_utility}
 \end{table}
 
@@ -476,7 +476,7 @@ on which exporting writes do not need to be stalled. We first present auxiliary
 definitions that will be utilized by cleanliness checks, and then describe the
 analysis.
 
-\subsubsection{Heap session}
+\subsubsection{Heap Session}
 
 Objects are allocated in the local heap by bumping the local heap frontier. In
 addition, associated with each local heap is a pointer called \cf{sessionStart}
@@ -495,7 +495,7 @@ Assigning the current local heap frontier to the \cf{sessionStart} pointer
 starts a new session. We start a new session on a context switch, a local
 garbage collection and after an object has been lifted to the shared heap.
 
-\subsubsection{Reference count}
+\subsubsection{Reference Count}
 
 We introduce a limited reference counting mechanism for local heap objects that
 counts the number of references from other local heap objects. Importantly, we
@@ -634,7 +634,7 @@ objects. This is indicated to the caller of \cf{isClean} function by assigning
 \cf{true} to \cf{*isLocalMany}, and is used in the implementation of lifting an
 object closure to the shared heap (Figure~\ref{code:lift}).
 
-\subsection{Write barrier}
+\subsection{Write Barrier}
 \label{sec:write_barrier}
 
 \begin{figure}
@@ -680,7 +680,7 @@ and 5 check whether the write is exporting. If the source of the object is
 clean, we lift the transitive object closure to the shared heap and return the
 new location of the object in the shared heap.
 
-\subsubsection{Delaying writes}
+\subsubsection{Delaying Writes}
 
 If the source of an exporting write is not clean, we suspend the current thread
 and switch to another thread in our scheduler. The source of the write is added
@@ -693,7 +693,7 @@ a local garbage collection, which will, as a part of the collection, fix all of
 the references to point to the new (lifted) location on the shared heap. Thus,
 the mutator never encounters a reference to a forwarded object. \\
 
-\subsubsection{Lifting objects to the shared heap}
+\subsubsection{Lifting Objects to the Shared Heap}
 
 \begin{figure}
 \begin{lstlisting}
@@ -764,7 +764,7 @@ in this case, we walk the current session to fix the references to any
 forwarded objects to point to their shared heap counterparts (lines 24--25).
 Finally, session start is moved to the current frontier.
 
-\subsubsection{Remote spawns}
+\subsubsection{Remote Spawns}
 \label{sec:remote_spawns}
 
 \begin{figure}[t]
@@ -805,7 +805,7 @@ to other preempted threads), it allocates a new stack in the local heap. Hence,
 except for the environment of the remotely spawned thread, all data allocated
 by the thread is placed in the local heap.
 
-\subsubsection{Barrier implementation}
+\subsubsection{Barrier Implementation}
 
 In our local collector, the code for tracking cleanliness (Lines 13--24 in
 Figure~\ref{code:writeBarrier}) is implemented as an RSSA pass. In RSSA, we are
@@ -837,7 +837,7 @@ information.
 \label{fig:smc}
 \end{figure}
 
-\subsection{Heap design}
+\subsection{Heap Design}
 
 The heap design for taking advantage of SMC is given in Figure~\ref{fig:smc}.
 The design is similar to the local collector design (Section~\ref{sec:lc}) with
@@ -931,7 +931,7 @@ updates are visible to all of the cores. After an exporting write, we invoke
 \texttt{smcRelease()}, to flush any outstanding writes to the memory (Line 9 in
 Figure~\ref{code:write_barrier_smc}).
 
-\subsection{Mapping channel communication over message-passing buffers}
+\subsection{Mapping Channel Communication over Message-Passing Buffers}
 \label{sec:comm_opt}
 
 In this section, we describe how we map the \MM communication model on top of
@@ -1055,6 +1055,8 @@ inputs.
 
 \begin{table}[t]
 \begin{center}
+\caption{Benchmark characteristics. \%Sh represents the average fraction of
+bytes allocated in the shared heap.}
 \begin{tabular} {|l|r|r|r|r|}
 \hline
 \multirow{2}{*}{{\bf Benchmark}} & {\bf Allocation Rate} 	& \multicolumn{2}{|c|}{{\bf Allocation}} & \multirow{2}{*}{\bf \# Threads} \\
@@ -1072,8 +1074,6 @@ inputs.
 \hline
 \end{tabular}
 \end{center}
-\caption{Benchmark characteristics. \%Sh represents the average fraction of
-bytes allocated in the shared heap.}
 \label{tab:bench_char}
 \end{table}
 
@@ -1149,7 +1149,7 @@ but also the garbage collector.
 In this section, we will focus on the procrastinating collector (\prc) design,
 and analyze the impact of different optimizations.
 
-\subsubsection{Impact of cleanliness}
+\subsubsection{Impact of Cleanliness}
 \label{sec:impact_cleanliness}
 
 Cleanliness information allows the runtime system to avoid preempting threads
@@ -1161,6 +1161,7 @@ programs running on 48-cores.
 
 \begin{table}
 \begin{center}
+\caption{Average number of preemptions on write barrier.}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
@@ -1176,7 +1177,6 @@ Raytrace 		& 881 \ci{35}		& 973 \ci{39}			& 13464 \ci{404} \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Average number of preemptions on write barrier.}
 \label{tab:preempt}
 \end{table}
 
@@ -1197,6 +1197,8 @@ increase in the number of local collections.
 
 \begin{table}
 \begin{center}
+\caption{Average percentage of forced GCs out of the total number of local
+major GCs.}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
@@ -1212,8 +1214,6 @@ Raytrace & 1.72 \ci{0.1} & 1.72 \ci{0.07} & 24.86 \ci{0.99} \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Average percentage of forced GCs out of the total number of local
-major GCs.}
 \label{tab:forcedGCs}
 \end{table}
 
@@ -1241,7 +1241,7 @@ without using cleanliness. On average, programs tend to run 28.2\% slower if
 cleanliness information is ignored. The results show that cleanliness analysis
 therefore plays a significant role in the \prc design.
 
-\subsubsection{Impact of immutability}
+\subsubsection{Impact of Immutability}
 
 If the source of an exporting write is immutable, we can make a copy of the
 object in the shared heap and assign a reference to the new shared heap object
@@ -1274,11 +1274,14 @@ immutable objects after the objects are lifted (Line 22 in
 Figure~\ref{code:lift}). On average, we see a 11.4\% performance loss if
 mutability information is not utilized for cleanliness.
 
-\subsubsection{Impact of heap session}
+\subsubsection{Impact of Heap Session}
 \label{sec:impact_session}
 
 \begin{table}
 \begin{center}
+\caption{Impact of heap session: \% LM clean represents the fraction of
+instances when a clean object closure has at least one object with
+\cf{LOCAL\_MANY} references.}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \% LM Clean} & {\bf Avg. Session Size (Bytes)} \\
@@ -1294,9 +1297,6 @@ Raytrace & 8.28 \ci{0.41} & 1112 \ci{22} \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Impact of heap session: \% LM clean represents the fraction of
-instances when a clean object closure has at least one object with
-\cf{LOCAL\_MANY} references.}
 \label{tab:session-impact}
 \end{table}
 
@@ -1320,7 +1320,7 @@ tagged as clean, and heap sessions are small enough to not introduce
 significant overheads during tracing.
 
 
-\subsection{MPB mapped channels}
+\subsection{MPB Mapped Channels}
 
 \begin{figure}[t]
 \centering

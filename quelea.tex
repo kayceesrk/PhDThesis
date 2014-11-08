@@ -327,7 +327,7 @@ balance must be non-negative. We begin by implementing a bank account
 replicated data type (RDT) in \quelea, and then describe the mechanisms to
 obtain the desired correctness guarantees.
 
-\subsection{RDT specification}
+\subsection{RDT Specification}
 
 A key novelty in \quelea is that it allows the addition of new RDTs to the
 store, which obviates the need for coercing the application logic to utilize
@@ -1279,8 +1279,9 @@ a user's timeline, userline, followers and following.
 \end{itemize}
 
 \begin{table}[t]
-\setlength{\tabcolsep}{4pt}
-{\sffamily \small
+\caption{The distribution of classified contracts. \#T refers to the number of
+tables in the application. The columns 4-6 (7-9) represent operations
+(transactions) assigned to this consistency (isolation) level.}
 \begin{center}
 \begin{tabular} {|l|r|r|r|r|r|r|r|r|}
 \hline
@@ -1295,10 +1296,7 @@ a user's timeline, userline, followers and following.
 {Microblog} & 659 & 5 & 13 & 6 & 1 & 6 & 3 & 1 \\
 \hline
 \end{tabular}
-\end{center} }
-\caption{The distribution of classified contracts. \#T refers to the number of
-tables in the application. The columns 4-6 (7-9) represent operations
-(transactions) assigned to this consistency (isolation) level.}
+\end{center}
 \label{tab:ctrts}
 \end{table}
 
@@ -1491,7 +1489,7 @@ relieve programmers of the burden to tag operations with consistency levels.
 Indeed, we do consider automatic inference of consistency contracts from
 application-specific integrity constraints as the next step for \quelea.
 
-\section{Conclusions}
+\section{Concluding Remarks}
 \label{q_sec:concl}
 
 In this chapter, we have presented \quelea a shallow Haskell extension for
