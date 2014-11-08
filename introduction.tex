@@ -258,7 +258,8 @@ model as a resource along with a dynamic shape analysis to eliminate the read
 barriers. Our final runtime design transparently utilizes SCC's support for
 software managed cache coherence and on-die message-passing interconnect to
 achieve an efficient implementation under which 99\% of the memory accesses can
-potentially be cached.
+potentially be cached. These results were published in ISMM 2012~\cite{mmgc}
+and MARC 2012~\cite{marc12}.
 
 \subsection{A Prescription for Safely Relaxing Synchrony}
 
@@ -306,7 +307,7 @@ mechanism for concurrent ML programs, on top of MultiMLton, capable of running
 in compute clouds. The implementation uses a novel un-coordinated
 checkpoint-recovery mechanism to detect and remediate mis-speculations. Our
 experiments on Amazon EC2 validate our thesis that this technique is quite
-useful in practice.
+useful in practice. These results were published in PADL 2014~\cite{rxcml}.
 
 \subsection{Declarative Programming over Eventually Consistent Data Stores}
 
