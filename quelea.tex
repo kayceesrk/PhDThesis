@@ -1234,3 +1234,269 @@ by the new effects. Finally, the old effects are deleted from the backing
 store. This process ensures that clients either witness the old or the new
 effects, but not both; the summarization process appears to be atomic from the
 clients perspective.
+
+\section{Evaluation}
+\label{q_sec:results}
+
+In this section, we evaluate \quelea programs, report their contract profile
+and illustrate the performance benefits of fine-grained consistency
+classification on operations and transactions. We also evaluate on the impact
+of the summarization. We implemented the following applications, which includes
+individual RDTs as well as larger applications composed of several RDTs:
+
+\begin{itemize}
+
+\item \textbf{LWW register}: A last-write-wins register that provides read and
+write operations. Each write is associated with a timestamp, which is used to
+resolve conflicting concurrent writes -- newer write wins.
+
+\item \textbf{DynamoDB register}: A integer register that allows eventual and
+strong puts and gets, conditional puts, increment and decrement operations.
+
+\item \textbf{Bank account}: Our running example, with savings and current
+accounts.
+
+\item \textbf{Shopping list}: Collaborative shopping list which allows adding
+and deleting items.
+
+\item \textbf{Online store}: Models an online store with shopping cart and
+dynamically changing item prices. Checkout process verifies that the customer
+only pays the accepted price.
+
+\item \textbf{RUBiS}: An ebay-like auction site~\cite{RUBiS}. The application
+allows users to browse items, bid for items on sale, and pay for items from a
+wallet modelled after a bank account.
+
+\item \textbf{Microblog}: A twitter-like microblogging site, modelled after
+Twissandra~\cite{Twissandra}. The application allows adding a new user, adding
+and replying to tweets, following, unfollowing and blocking users, and fetching
+a user's timeline, userline, followers and following.
+\end{itemize}
+
+\begin{table}[t]
+\setlength{\tabcolsep}{4pt}
+{\sffamily \small
+\begin{center}
+\begin{tabular} {|l|r|r|r|r|r|r|r|r|}
+\hline
+{\bf Benchmark} & {\bf LOC} & {\bf \#T} & {\bf EC} & {\bf CC} & {\bf SC} & {\bf RC} & {\bf MAV} & {\bf RR} \\
+\hline
+{LWW Reg} & 108 & 1 & 2 & 2 & 2 & 0 & 0 & 0 \\
+{DynamoDB} & 126 & 1 & 3 & 1 & 2 & 0 & 0 & 0 \\
+{Bank Account} & 155 & 1 & 1 & 1 & 1 & 1 & 0 & 1 \\
+{Shopping List} & 140 & 1 & 2 & 1 & 1 & 0 & 0 & 0 \\
+{Online store} & 340 & 4 & 9 & 1 & 0 & 2 & 0 & 1 \\
+{RUBiS} & 640 & 6 & 14 & 2 & 1 & 4 & 2 & 0 \\
+{Microblog} & 659 & 5 & 13 & 6 & 1 & 6 & 3 & 1 \\
+\hline
+\end{tabular}
+\end{center} }
+\caption{The distribution of classified contracts. \#T refers to the number of
+tables in the application. The columns 4-6 (7-9) represent operations
+(transactions) assigned to this consistency (isolation) level.}
+\label{tab:ctrts}
+\end{table}
+
+The distribution of contracts in these applications is given in
+Table~\ref{tab:ctrts}. We see that majority of the operations and transactions
+are classified as eventually consistent and RC, respectively. Operation
+contracts are used to enforce integrity and visibility constraints on
+individual fields in the tables. Transactions are mainly used to consistently
+modify and access related fields across tables. In \quelea, the contract
+classification process is completely performed at compile time and has no
+overheads at runtime. The proof obligations associated with contract
+classification is discharged through the Z3 SMT Solver. Across our benchmarks,
+classifying a contract took 11.5 milliseconds on average.
+
+For our performance evaluation, we deploy \quelea applications in
+\emph{clusters}, where each cluster is composed of 5 fully replicated Cassandra
+replicas within the same datacenter. We instantiate one shim layer node for
+every Cassandra replica, and place it on the same VM as the Cassandra replica.
+Clients are instantiated on the same data center as the store, and run
+transactions. We deploy the each node in the cluster on \cf{c3.4xlarge} Amazon
+EC2 instances. Our shim layer nodes are multi-threaded, and we allocate 8 CPUs
+(out of 16 available) for each shim layer node. The clients also run on
+\cf{c2.4xlarge} instances. We call this \cf{1DC} configuration. For our
+geo-distributed experiments (\cf{2DC}), we instantiate 2 clusters, each with 5
+nodes, and place the clusters on US-east (Virginia) and US-west (Oregon). The
+average inter-region latency was 85ms.
+
+\begin{figure*}[t]
+  \centering
+  \subfigure[Latency]{\label{grf:BA-lat}\includegraphics[width=0.45\textwidth]{graphs/BA-lat.pdf}}
+  \subfigure[Throughput]{\label{grf:BA-tp}\includegraphics[width=0.45\textwidth]{graphs/BA-tp.pdf}}
+  \subfigure[Throughput vs. Latency]{\label{grf:BA-tp-vs-lat}\includegraphics[width=0.45\textwidth]{graphs/BA-tp-vs-lat.pdf}}
+	\caption{Bank account performance.}
+  \label{grf:BA}
+\end{figure*}
+
+
+Figure~\ref{grf:BA} shows the performance of operations in bank account example
+as we increase the number of clients in \cf{1DC} configuration. Our client
+workload was generated using YCSB benchmark~\cite{YCSB}. The benchmark
+uniformly chose from 100,000 keys, where the operation spread was 25\%
+withdraw, 25\% deposit and 50\% getBalance, which corresponds to the default
+50:50 read:write mix in YCSB. We increased the number of clients from 128 to
+1024, and each experiment ran for 180 seconds.
+
+The lines marked EC and CC correspond to all operations being assigned EC and
+CC consistency levels. These levels compromise correctness as withdraw has to
+be and SC operation. The line SC corresponds to a configuration where all
+operations are strongly consistent; this ensures application correctness.
+\quelea corresponds to our implementation, which classifies operations based on
+their contracts. Both \quelea and SC ensure correctness. However, with 512
+clients, \quelea implementation was within 41\% of latency and 18\% of
+throughput of EC, whereas SC operations had 162\% higher latency and 52\% lower
+throughput than EC operations. Observe that in the
+Figure~\ref{grf:BA-tp-vs-lat} which compares throughput vs. latency, there is a
+point in each case after which the latency increases while the throughput
+decreases. This indicates a point after which the store becomes saturated with
+client requests.
+
+In \cf{2DC} configuration (not-shown), the average latency of SC operations
+with 512 clients increased by 9.4$\times$ due to the cost of geo-distributed
+coordination, whereas \quelea operations were only 2.2$\times$ slower, mainly
+due to the increased cost of \cf{withdraw} operations. Importantly, the latency
+of \cf{getBalance} and \cf{deposit} remained almost the same. This illustrates
+the benefit of fine-grained contract classification in \quelea.
+
+\begin{figure*}[t]
+  \centering
+  \subfigure[Latency]{\label{grf:LWW-txn-lat}\includegraphics[width=0.45\textwidth]{graphs/LWW-txn-lat.pdf}}
+  \subfigure[Throughput]{\label{grf:LWW-txn-tp}\includegraphics[width=0.45\textwidth]{graphs/LWW-txn-tp.pdf}}
+  \subfigure[Throughput vs. Latency]{\label{grf:LWW-txn-tp-vs-lat}\includegraphics[width=0.45\textwidth]{graphs/LWW-txn-tp-vs-lat.pdf}}
+	\caption{LWW register transaction performance.}
+  \label{grf:LWW-txn}
+\end{figure*}
+
+We compare the performance of different transaction isolation level choices in
+Figure~\ref{grf:LWW-txn} using the LWW register. The numbers were obtained
+under 1DC configuration. The YCSB workload was modified to issue 10 operations
+per transaction, with the default 50:50 read:write mix. Each operation is
+assumed to have eventual consistency. \cf{NoTxn} corresponds to a configuration
+that does not use transactions. Compared to this RC is only 12\% shower in
+terms of latency with 512 clients, where as RR is 2.3X slower. The difference
+between RC and \cf{NoTxn} is due to the meta-data overhead of recording
+transaction information in the object state. For RR transaction, the cost of
+capturing and maintaining the snapshot in an RR transaction is the biggest
+source of overhead.
+
+We also compared (not shown) the performance of EC LWW operations directly
+against Cassandra (our backing store), which uses last-writer-wins as the only
+convergence semantics. While Cassandra provides no stronger-than-eventual
+consistency properties, \quelea was within 30\%(20\%) of latency(throughput) of
+Cassandra with 512 clients, illustrating that the programmers only have to pay
+a minimal overhead for the expressive and stronger \quelea programming model.
+
+\begin{figure}[t]
+  \centering
+  \subfigure[Latency]{\label{grf:rubis-lat}\includegraphics[width=0.45\textwidth]{graphs/Rubis-lat.pdf}}
+  \subfigure[Throughput]{\label{grf:rubis-tp}\includegraphics[width=0.45\textwidth]{graphs/Rubis-tp.pdf}}
+  \subfigure[Throughput vs. Latency]{\label{grf:Rubis-tp-vs-lat}\includegraphics[width=0.45\textwidth]{graphs/Rubis-tp-vs-lat.pdf}}
+	\caption{Rubis bidding mix performance.}
+  \label{grf:rubis}
+\end{figure}
+
+
+Figure~\ref{grf:rubis} compares the \quelea implementation of RUBiS in \cf{1DC}
+configuration against a single replica (NoRep) and strongly replicated
+(StrongRep) \cf{1DC} deployment. The benchmark was RUBiS bidding mix, which has
+15\% read-write interactions, which is representative of the auction workload.
+Without replication, NoRep trivially provides strong consistency. However, this
+deployment does not scale beyond 1750 operations per second. Strong replication
+offers better throughput at the cost of greater latency due to inter-replica
+coordination. \quelea deployment offers the benefit of replication, while only
+paying the cost of coordination when necessary.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.45\textwidth]{graphs/summarization.pdf}
+\caption{Impact of summarization.}
+\label{grf:summarization}
+\end{figure}
+
+Finally, we study the impact of summarization in
+Figure~\ref{grf:summarization}. We utilize 128 clients and a single \quelea
+replica, with all the clients operating on the \emph{same} LWW register to
+stress test the summarization mechanism. The shim layer cache (mem) of
+operations is summarized every 64 updates, while the updates in the backing
+store (disk) are summarized every 4096 updates. Each point in the graph
+represents the average latency of the previous 1000 operations. Each experiment
+is run for 60s.
+
+The results show that without summarization, the average latency of operations
+increase exponentially to almost 1 second, and only 13K operations were
+performed in a minute. Since every operation has to reduce over the set of all
+previous operations, with a ever growing set, the operations take increasingly
+more time to complete. With summarization only in memory, the performance still
+degrades due to the cost of fetching all previous updates from the backing
+store into the shim layer. Fetching the latest updates is essential for SC
+operations. With both summarizations enabled, we see that the latency does not
+increase over time, and we were able to perform 67K operations. This graph
+illustrates the importance and effectiveness of summarization in \quelea.
+
+\section{Related Work}
+\label{q_sec:related}
+
+Operation-based RDTs have been widely studied in terms of their algorithmic
+properties~\cite{SSS,Burckhardt2014}, and several systems utilize this model to
+construct distributed data structures~\cite{Lakshman2010,Bayou,Tango}. These
+systems typically propose to implement the datatypes directly over a cluster of
+nodes, and only focus on basic eventual consistency. Hence, these systems
+implement custom solutions for durability and fault-tolerance. \quelea realizes
+RDTs stronger consistency models on top of off-the-shelf eventually consistent
+distributed stores. In this respect, \quelea is similar to~\cite{BoltOn} where
+causal consistency is achieved through a shim layer on Cassandra, which
+explicitly tracks and enforces dependencies between updates.
+However,~\cite{BoltOn} does not support user-defined RDTs, automatic contract
+classification and transactions.
+
+Since eventual consistency alone is insufficient to build correct applications,
+several systems~\cite{Bayou,Terry2013,RedBlue} propose a lattice of stronger
+consistency levels. Similarly, traditional database processing
+systems~\cite{Berenson95} and their replicated variants~\cite{BailisHAT}
+propose weaker isolation levels for performance. In these systems, the onus is
+on the developer to choose the correct consistency(isolation) level for
+operations(transactions). \quelea relieves the developer of this burden, and
+instead expects contracts expressing declarative visibility requirements.
+
+Our contract language is inspired by the axiomatic description of RDT semantics
+proposed by~\cite{Burckhardt2014}. While they use axioms for formal
+verification of correctness of an RDT implementation, we utilize them as a
+means for the user to express the desired consistency guarantees in the
+application. Similar to their work, our contract language does not incorporate
+real (i.e., wall-clock) time. Hence, it cannot describe store semantics such as
+recency or bounded-staleness guarantees offered by certain
+stores~\cite{Terry2013}.
+
+Several conditions have been proposed to judge whether an operation on a
+replicated data object needs coordination or not. ~\cite{Calm} defines
+\emph{logical monotonicity} as a sufficient condition for coordination freedom,
+and proposes a consistency analysis that marks code regions performing
+non-monotonic reasoning (eg: aggregations, such as \cf{COUNT}) as potential
+coordination points.  ~\cite{IConfluence} and ~\cite{Sieve} define
+\emph{invariant confluence} and \emph{invariant safety}, respectively, as
+conditions for safely executing an operation without coordination. ~\cite{Sieve}
+also proposes a program analysis that conservatively marks operations as
+\emph{blue} (coordination not required), while marking the remaining as
+\emph{red} (coordination required). Unlike \quelea, these works focus on a
+coarse-grained classification of consistency as eventual or strong, and do not
+focus on transaction isolation levels. However, program analyses they propose
+relieve programmers of the burden to tag operations with consistency levels.
+Indeed, we do consider automatic inference of consistency contracts from
+application-specific integrity constraints as the next step for \quelea.
+
+\section{Conclusions}
+\label{q_sec:concl}
+
+In this chapter, we have presented \quelea a shallow Haskell extension for
+declarative programming over eventually consistent data stores. The key idea of
+\quelea is the automatic classification of fine-grained consistency contracts on
+operations and distributed transactions with respect to the consistency and
+isolation levels offered by the store. Our contract language is carefully
+crafted from a decidable subset of first-order logic, enabling the use of
+automatic theorem prover to discharge the proof obligations associated with
+contract classification. We realize an instantiation of \quelea on top of
+off-the-shelf distributed store, Cassandra, and illustrate the benefit of
+fine-grained contract classification by implementing and evaluating several
+scalable applications.
