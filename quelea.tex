@@ -1,3 +1,8 @@
+\newcommand{\qed}{\nobreak \ifvmode \relax \else
+      \ifdim\lastskip<1.5em \hskip-\lastskip
+      \hskip1.5em plus0em minus0.5em \fi \nobreak
+      \vrule height0.75em width0.5em depth0.25em\fi}
+
 \newcommand{\scc}{\psi_{\sf sc}}
 \newcommand{\ccc}{\psi_{\sf cc}}
 \newcommand{\ecc}{\psi_{\sf ec}}
@@ -837,12 +842,12 @@ $\auxred{} {\E,\langle op,\tau \rangle;\sigma \pll \Sigma} {\eff} {\E', \sigma
 \cv[\eff/\cureff]$
 \end{theorem}
 
-\noindent The theorem states that if a data store correctly enforces $\scc$,
-$\ccc$, and $\ecc$ contracts in all well-formed executions, then the same
-store, extended with the classification scheme shown in
-Figure~\ref{sem:classify}, can enforce all well-formed \quelea contracts. The
-proof of the theorem along with the operational semantics for store that
-provides multiple consistency levels is presented in the next section.
+The theorem states that if a data store correctly enforces $\scc$, $\ccc$, and
+$\ecc$ contracts in all well-formed executions, then the same store, extended
+with the classification scheme shown in Figure~\ref{sem:classify}, can enforce
+all well-formed \quelea contracts. The proof of the theorem along with the
+operational semantics for store that provides multiple consistency levels is
+presented in the next section.
 
 \section{Operational Semantics}
 \label{q_sec:meta-theory}
@@ -986,11 +991,11 @@ does not require any additional constraints, and $\psi_1$ is simply $\small
 
 \begin{figure}[t]
 \centering
-\subfigure[Atomicity]{\label{fig:txn_atomicity}\includegraphics[width=0.3\columnwidth]{Figures/TxnAtomic}}
+\subfigure[Atomicity]{\label{fig:txn_atomicity}\includegraphics[width=0.25\columnwidth]{Figures/TxnAtomic}}
 \hfill
-\subfigure[Monotonic Atomic View]{\label{fig:txn_mav}\includegraphics[width=0.3\columnwidth]{Figures/TxnMAV}}
+\subfigure[Monotonic Atomic View]{\label{fig:txn_mav}\includegraphics[width=0.25\columnwidth]{Figures/TxnMAV}}
 \hfill
-\subfigure[Repeatable Read]{\label{fig:txn_rr}\includegraphics[width=0.3\columnwidth]{Figures/TxnRR}}
+\subfigure[Repeatable Read]{\label{fig:txn_rr}\includegraphics[width=0.25\columnwidth]{Figures/TxnRR}}
 \caption{Semantics of transaction contracts. $x$ and $y$ are distinct objects.
 The dotted line represents the visibility requested by the contracts.}
 \label{fig:transaction}
@@ -1211,7 +1216,7 @@ summarization process.
 
 \begin{figure}[t]
 \begin{center}
-\includegraphics[width=0.8\columnwidth]{Figures/SumDisk}
+\includegraphics[width=\columnwidth]{Figures/SumDisk}
 \end{center}
 \caption{Summarization in the backing store. Dotted circle represents effects not yet inserted into the backing store.}
 \label{fig:impl_sum_disk}
