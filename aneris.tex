@@ -376,7 +376,7 @@ Figure~\ref{fig:rb-overhead} shows these overheads as a percentage of mutator
 time. Our experiments reveal that, on average, the mutator spends 15.3\% of the
 time executing read barriers for our benchmarks.
 
-\begin{table}
+\begin{table}[t]
 \begin{center}
 \begin{tabular} {|l|r|r|}
 \hline
@@ -542,7 +542,7 @@ current session.
 
 \noindent Otherwise, the object closure is not clean.
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 bool isClean (pointer p, bool* isLocalMany) {
   clean = true;
@@ -767,7 +767,7 @@ Finally, session start is moved to the current frontier.
 \subsubsection{Remote spawns}
 \label{sec:remote_spawns}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 ThreadID spawn (pointer closure, int target) {
   ThreadID tid = newThreadID();
@@ -981,7 +981,7 @@ MultiMLton supports unboxed types that represent raw values. Hence, under case
 channel. In addition, we add a reference to the blocked thread to the
 remembered list so that the local garbage collection can trace it.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
 \includegraphics[width=1\textwidth]{Figures/Comm_Case_3}
 \caption{Steps involved in sending an mutable object \cf{a} by thread \cf{T1}
@@ -998,7 +998,7 @@ globalize \cf{a} before \cf{T1} blocks. Since the message is already in the
 shared heap, when the receiver thread \cf{T2} eventually arrives, it just picks
 up a pointer to the message in the shared heap.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
 \includegraphics[width=1\textwidth]{Figures/Comm_Case_4}
 \caption{Steps involved in sending an immutable object \cf{a} by thread \cf{T1}
@@ -1053,7 +1053,7 @@ inputs.
 \item {\bf Raytrace}: a ray-tracing algorithm to render a scene.
 \end{itemize}
 
-\begin{table}
+\begin{table}[t]
 \begin{center}
 \begin{tabular} {|l|r|r|r|r|}
 \hline
@@ -1228,9 +1228,9 @@ number of exporting writes. On such benchmarks almost all local GCs are forced
 in the absence of cleanliness. This adversely affects the running time of
 programs.
 
-\begin{figure}
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{Graphs/slowdown_cleanliness}
+  \includegraphics[width=0.8\textwidth]{Graphs/slowdown_cleanliness}
 	\caption{Impact of utilizing object mutability information and cleanliness
 	analysis on the performance of \prc.}
   \label{fig:slowdown-cleanliness}
@@ -1322,9 +1322,9 @@ significant overheads during tracing.
 
 \subsection{MPB mapped channels}
 
-\begin{figure}[ht]
+\begin{figure}[t]
 \centering
-\includegraphics[width=1\textwidth]{Graphs/speedup_scc_chan}
+\includegraphics[width=0.7\textwidth]{Graphs/speedup_scc_chan}
 \caption{Performance comparison of first-class channel communication over the
 MPB \cf{(MBP+)} vs solely over the shared memory \cf{(MPB-)}: Geometric mean
 over 8 benchmarks.}
