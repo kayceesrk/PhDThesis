@@ -1127,6 +1127,7 @@
 \newtheorem{proposition}{Proposition}[section]
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
 \renewcommand{\section}{%
   \@startsection
     {section}%

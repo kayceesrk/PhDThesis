@@ -381,6 +381,7 @@ time executing read barriers for our benchmarks.
 \caption{Effectiveness of read barrier checks: RB invocations represents the
 average number of read barrier invocations and forwarded represents the average
 number of instances when the read barrier encountered a forwarded object.}
+\label{tab:rb_utility}
 \begin{tabular} {|l|r|r|}
 \hline
 {\bf Benchmark} & {\bf RB invocations ($\times 10^6$)} & {\bf Forwarded}\\
@@ -396,7 +397,6 @@ number of instances when the read barrier encountered a forwarded object.}
 \hline
 \end{tabular}
 \end{center}
-\label{tab:rb_utility}
 \end{table}
 
 The next question to ask is whether the utility of the read barrier justifies
@@ -1057,6 +1057,7 @@ inputs.
 \begin{center}
 \caption{Benchmark characteristics. \%Sh represents the average fraction of
 bytes allocated in the shared heap.}
+\label{tab:bench_char}
 \begin{tabular} {|l|r|r|r|r|}
 \hline
 \multirow{2}{*}{{\bf Benchmark}} & {\bf Allocation Rate} 	& \multicolumn{2}{|c|}{{\bf Allocation}} & \multirow{2}{*}{\bf \# Threads} \\
@@ -1074,7 +1075,6 @@ bytes allocated in the shared heap.}
 \hline
 \end{tabular}
 \end{center}
-\label{tab:bench_char}
 \end{table}
 
 The benchmark characteristics is given in Figure~\ref{tab:bench_char}. The
@@ -1162,6 +1162,7 @@ programs running on 48-cores.
 \begin{table}
 \begin{center}
 \caption{Average number of preemptions on write barrier.}
+\label{tab:preempt}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
@@ -1177,7 +1178,6 @@ Raytrace 		& 881 \ci{35}		& 973 \ci{39}			& 13464 \ci{404} \\
 \hline
 \end{tabular}
 \end{center}
-\label{tab:preempt}
 \end{table}
 
 Table~\ref{tab:preempt} shows the number of preemptions on write barrier for
@@ -1199,6 +1199,7 @@ increase in the number of local collections.
 \begin{center}
 \caption{Average percentage of forced GCs out of the total number of local
 major GCs.}
+\label{tab:forcedGCs}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
@@ -1214,7 +1215,6 @@ Raytrace & 1.72 \ci{0.1} & 1.72 \ci{0.07} & 24.86 \ci{0.99} \\
 \hline
 \end{tabular}
 \end{center}
-\label{tab:forcedGCs}
 \end{table}
 
 Table~\ref{tab:forcedGCs} shows the percentage of local major GCs that were
@@ -1282,6 +1282,7 @@ mutability information is not utilized for cleanliness.
 \caption{Impact of heap session: \% LM clean represents the fraction of
 instances when a clean object closure has at least one object with
 \cf{LOCAL\_MANY} references.}
+\label{tab:session-impact}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \% LM Clean} & {\bf Avg. Session Size (Bytes)} \\
@@ -1297,7 +1298,6 @@ Raytrace & 8.28 \ci{0.41} & 1112 \ci{22} \\
 \hline
 \end{tabular}
 \end{center}
-\label{tab:session-impact}
 \end{table}
 
 In order to assess the effectiveness of using heap sessions, we measured the

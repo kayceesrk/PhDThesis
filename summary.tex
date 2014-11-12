@@ -1,1 +1,26 @@
 \chapter{Concluding Remarks and Future Work}
+\label{chap:conclusion}
+
+A strongly consistent view of data, which enables the programmer to treat
+parallel and distributed architectures as a centralized system, is at odds with
+practical concerns such as availability, coherence, latency, and partial
+failures. Hence, modern multicore and distributed systems only provide weak
+consistency guarantees, belying the semblance of a centralized system, which
+complicates concurrent programming. In this dissertation, we presented three
+novel techniques for programming under weak consistency. \MMSCC provides a
+coherent and managed shared memory for programmers on the non-cache coherent
+Intel SCC processor. \rxcml enables synchronous communication to be utilized as
+an abstraction over asynchronous distributed systems. \quelea permits
+declarative reasoning about consistency guarantees for programs over eventually
+consistent data stores.
+
+\section{Future Work}
+
+In this section, we present the future work. This discussion is split based on
+the three contributions.
+
+\subsection{\MMSCC}
+
+\subsection{\rxcml}
+
+\subsection{\quelea}
