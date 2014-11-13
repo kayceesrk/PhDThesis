@@ -1995,8 +1995,9 @@ current ($c$) and savings ($s$). Each account provides operations
 \cf{withdraw}, \cf{deposit} and \cf{getBalance}, with the same contracts as
 defined previously. We consider two transactions -- \cf{save(amt)}, which
 transfers \cf{amt} from current to savings, and \cf{totalBalance}, which
-returns the sum of the balances of individual accounts. The \quelea code for the
-transactions is given below:
+returns the sum of the balances of individual accounts. Our goal is to ensure
+that \cf{totalBalance} returns the result obtained from a consistent snapshot
+of the object states. The \quelea code for the transactions is given below:
 
 \hspace{1em}
 \begin{minipage}[t]{0.4\columnwidth}
@@ -2014,7 +2015,7 @@ save amt =
 totalBalance =
   x <- dollar(classify $\cv_{tb}$)
   atomically x dollar do
-    b1 <- getBalance s
+    b1 <- getBalance c
     b2 <- getBalance s
     return b1 + b2
 \end{codehaskell}
@@ -2027,8 +2028,7 @@ transactions. The function \cf{classify} assigns the contracts
 store; \cf{\$()} is meta-programming syntax for splicing the result into the
 program. The \cf{atomically} construct invokes the enclosing operations at the
 given isolation level $x$, ensuring that the effects of the operations are made
-visible atomically. Our goal is to ensure that \cf{totalBalance} returns the
-result obtained from a consistent snapshot of the object states.
+visible atomically.
 
 While making both transactions serializable would ensure correctness,
 distributed stores rarely offer serializable transactions since it is
