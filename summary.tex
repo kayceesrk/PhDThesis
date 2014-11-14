@@ -21,6 +21,99 @@ the three contributions.
 
 \subsection{\MMSCC}
 
+The main hindrance to scalability of our \MMSCC collector is the stop-the-world
+nature of the shared heap collection. While shared heap collections are
+infrequent when compared to local collections, the pause time for shared heap
+collections reaches almost one second due to (1) the uncached nature of the
+collection and (2) the cost of synchronizing all the cores on a barrier. A
+natural extension to address this issue is to make the shared heap collection
+concurrent similar to the design by Doligez et al.~\cite{Doligez93}. In a
+concurrent shared heap collection, the cores no longer need to synchronize on a
+global barrier, and we could envision allocating a few of the available cores
+specifically for concurrent shared heap collection.
+
+Our globalization strategy lifts the \emph{entire} transitive closure of the
+globalized object to the shared heap. We have observed that this strategy
+although simple to implement, globalizes far more memory than is actually
+shared between the cores. This phenomenon has also been observed by Marlow et
+al.~\cite{Marlow11} in their local collector design for Haskell. We can
+envision a strategy where only portions of the transitive closure are
+globalized, with further globalization on demand. In this design, we will have
+pointers from shared heap into local heaps (breaking the heap invariant). We
+can treat such pointers similar to remembered
+stacks (Section~\ref{sec:aneris_rem_stack}), adding the pointers into the local heap
+into a remembered set, so that they can be traced during local GCs. Moreover,
+the abundance of concurrency in our programming model can mask the latency
+associated with on-demand globalization, which involves cross-core
+communication.
+
+Finally, while our GC design is geared for circumventing the absence of cache
+coherence, we get the added benefit of reduced pause times since each local
+heap is collected independently. However, our local heap collections are indeed
+optimized for throughput and optimal memory utilization. If latency is indeed
+the desired metric, we can envision concurrent and incremental collection for
+the local heaps. In particular, the independence of collection in the local
+heaps in \MMSCC allows the same execution to utilize latency sensitive GC in a
+collection of cores with throughput optimized GC in others. Thus, \MMSCC
+design is well-suited for mixed mode applications such as web-browsers, where
+both latency and throughput are important for distinct parts of the same
+program.
+
 \subsection{\rxcml}
 
+While \rxcml provides composable synchronous reasoning for asynchronous
+distributed systems, the implementation does not address the challenge of
+partial failures in such a setting. The key observation we make is that the
+dependence graph used for monitoring the correctness of speculative execution
+can be persisted to create a checkpoint~\cite{RollbackRecovery} to recover from
+failures in a crash-restart mode. Such an implementation is especially useful
+in the context of long running data analytics jobs or stateful stream
+processing applications.
+
+Currently, \rxcml treats references as side-effecting operations. However, the
+techniques used for speculative execution can naturally be extended to
+references~\cite{Ziarek10}. In particular, we will treat the reference write as
+an effect, and record the old value of the reference written as a node in the
+dependence graph. If the execution mis-speculates, apart from restoring the
+thread state with saved continuations, we will restore the state of the
+references as well.
+
+The \rxcml model can also provide an alternative strategy for enforcing
+application-level consistency guarantees for programs on top of eventually
+consistent distributed stores. Indeed, distributed stores such as
+Bayou~\cite{Bayou} and Google's App Engine datastore utilize speculative
+execution to recover stronger consistency guarantees. Equipped with \quelea
+style contracts, \rxcml can bring speculative execution for user-defined
+replicated data types.
+
 \subsection{\quelea}
+
+Contracts in \quelea are written by the programmer by mentally translating the
+application level consistency specification into visibility constraints on
+effects. Ideally, we would like to automatically perform the translation from
+database integrity constraints to contracts capturing visibility obligations.
+For example, one might wish to express that the balance in a replicated bank
+account never drops below zero, which entails the visibility constraint that
+withdraw operations must be totally ordered. The task would then be to discover
+the \emph{weakest} contract that preserves the invariants. An attractive
+approach to solving this problem is to utilize counter-example guided invariant
+synthesis~\cite{Cegis} to infer the contracts.
+
+The summarization function for most data types turn out to be straight-forward.
+Conway et al.~\cite{edelweiss} describe a program analysis technique to analyze
+Bloom programs to automatically derive the garbage collection procedure for
+message-passing programs. It would be interesting to explore the applicability
+of a similar technique for deriving the summarization function for the RDTs.
+The combination of these techniques allow programs for eventually consistent
+distributed stores to be expressed in the same way as traditional database
+manipulating programs such as SQL or LINQ~\cite{Meijer2011}.
+
+In our current work, we have utilized Cassandra as our backing store. However,
+\quelea itself is an abstract model and can be mapped to a variety of backends.
+A particularly attractive scenario is utilize \quelea to write programs on top
+of non-cache coherent multicore processors like the Intel SCC. Since \quelea
+programming model is built for eventually consistent loosely coupled setting,
+it can naturally express programs for architectures like SCC. In particular,
+each core can operate completely locally, and there is no need for the shared
+heap. The same \quelea program can be compiled to a variety of backends
+depending upon the deployment platform.

@@ -195,7 +195,7 @@ via the shared heap.  In order to preserve these invariants, the mutator
 typically executes a \emph{write barrier} on every store operation. The write
 barrier ensures that before assigning a local object reference (source) to a
 shared heap object (target), the local object along with its transitive object
-closure is lifted to the shared heap. We call such writes \emph{exporting
+closure is lifted to the shared heap. We call such writes \emph{globalizing
 writes} as they export information out of local heaps.  The execution of the
 write barrier creates \emph{forwarding pointers} in the original location of
 the lifted objects in the local heap. These point to the new locations of the
@@ -218,7 +218,7 @@ synchronization.
 
 Objects are allocated in the shared heap only if they are to be shared between
 two or more cores. Objects are automatically lifted to the shared heap because
-of exporting writes and spawning a thread on a different core. Apart from
+of globalizing writes and spawning a thread on a different core. Apart from
 these, all globals are allocated in the shared heap, since globals are visible
 to all cores by definition. Thus, for the ML programmer on this system, the
 absence of cache coherence is completely hidden, the SCC appears as a cache
@@ -239,6 +239,7 @@ during generational collection. Secondly, shared heap collection requires
 global synchronization, and it is wise to perform such collections rarely.
 
 \subsection{Remembered Stacks}
+\label{sec:aneris_rem_stack}
 
 In \MM threads can synchronously or asynchronously communicate with each other
 over first-class message-passing communication channels. If a receiver is not
@@ -348,10 +349,10 @@ substantially reduced.
 The compiler and runtime system ensure that entries on thread stacks never
 point to a forwarded object. Whenever an object pointer is stored into a
 register or the stack, a read barrier is executed on the object pointer to get
-the current location of the object. Immediately after an exporting write or a
+the current location of the object. Immediately after an globalizing write or a
 context switch, the current stack is walked and references to forwarded objects
 are updated to point to the new location of lifted objects in the shared heap.
-Additionally, before performing an exporting write, register values are saved
+Additionally, before performing an globalizing write, register values are saved
 on the stack, and reloaded after exit. Thus, as a part of fixing references to
 forwarding pointers from the stack, references from registers are also fixed.
 This ensures that the registers never point to forwarded objects either. Hence,
@@ -452,7 +453,7 @@ The effectiveness of our approach depends on a programming model in which (a)
 most objects are clean, (b) the transitive closure of the object being lifted
 rarely has pointers to it from other heap allocated objects, and (c) there is a
 sufficient degree of concurrency in the form of runnable threads; this avoids
-idling available cores whenever a thread is stalled performing an exporting
+idling available cores whenever a thread is stalled performing an globalizing
 write that involves an unclean object.  We observe that conditions (a) and (b)
 are common to functional programming languages and condition (c) follows from
 the \acml\ runtime model. Our technique does not rely on programmer
@@ -463,7 +464,7 @@ barriers, and can be completely implemented as a lightweight runtime technique.
 \label{sec:clean}
 
 Although \acml provides an abundance of concurrency, with the procrastination
-mechanism, many of the threads in a program may end up blocked on exporting
+mechanism, many of the threads in a program may end up blocked on globalizing
 writes, waiting for a local garbage collection to unblock them. If all of the
 threads on a particular core have procrastinated, then a local garbage
 collection is needed in order to make progress. Such \emph{forced} local
@@ -472,7 +473,7 @@ of eliminating read barriers. Hence, it is desirable to avoid procrastination
 whenever possible.
 
 In this section, we describe our cleanliness analysis, which identifies objects
-on which exporting writes do not need to be stalled. We first present auxiliary
+on which globalizing writes do not need to be stalled. We first present auxiliary
 definitions that will be utilized by cleanliness checks, and then describe the
 analysis.
 
@@ -573,7 +574,7 @@ cleanliness check. Since the cleanliness check, memory barriers, and the
 garbage collector are implemented in low-level code (C, assembly and low-level
 intermediate language in the compiler), this code snippet, and others that
 follow in this section are in pseudo-C language, to better represent their
-implementation. If the source of an exporting assignment is immutable, we can
+implementation. If the source of an globalizing assignment is immutable, we can
 make a copy of the immutable object in the shared heap, and avoid introducing
 references to forwarded objects. Standard ML does not allow the programmer to
 test the referential equality of immutable objects. Equality of immutable
@@ -585,11 +586,11 @@ need to move this object.
 \centering
 \subfigure[Tree-structured object closure]{\label{fig:cleanliness_tree}\includegraphics[width=0.8\textwidth]{Figures/Cleanliness_Tree}}\\
 \subfigure[Session-based cleanliness]{\label{fig:cleanliness_session}\includegraphics[width=0.8\textwidth]{Figures/Cleanliness_Session}}
-\caption{Utilizing object closure cleanliness information for exporting writes to avoid references to forwarded objects.}
+\caption{Utilizing object closure cleanliness information for globalizing writes to avoid references to forwarded objects.}
 \label{fig:cleanliness_examples}
 \end{figure}
 
-If the object closure of the source of a exporting write is clean, we can move
+If the object closure of the source of a globalizing write is clean, we can move
 the object closure to the shared heap and quickly fix all of the forwarding
 pointers that might be generated. For example, consider an object that defines
 a tree structure; such an object is clean if the root has \cf{ZERO} references
@@ -624,7 +625,7 @@ and \cf{s $\rightarrow$ q}) or from outside the object closure (edge \cf{a
 $\rightarrow$ q}). After lifting such object closures to the shared heap, only
 the current session is walked to fix all of the references to forwarded objects
 created during the copy. In practice (Section~\ref{sec:impact_session}),
-current session sizes are much smaller than heap sizes, and hence exporting
+current session sizes are much smaller than heap sizes, and hence globalizing
 writes can be performed quickly.
 
 Finally, in the case of \cf{LOCAL\_MANY} references, the object closure is
@@ -676,13 +677,13 @@ Figure~\ref{code:writeBarrier}. A write barrier is invoked prior to a write and
 returns a new value for the source of the write. The check \cf{isObjptr} at
 line 2 returns true only for heap allocated objects, and is a compile time
 check. Hence, for primitive valued writes, there is no write barrier. Lines 4
-and 5 check whether the write is exporting. If the source of the object is
+and 5 check whether the write is globalizing. If the source of the object is
 clean, we lift the transitive object closure to the shared heap and return the
 new location of the object in the shared heap.
 
 \subsubsection{Delaying Writes}
 
-If the source of an exporting write is not clean, we suspend the current thread
+If the source of an globalizing write is not clean, we suspend the current thread
 and switch to another thread in our scheduler. The source of the write is added
 to a queue of objects that are waiting to be lifted. Since the write is not
 performed, no forwarded pointers are created. If programs have ample amounts of
@@ -786,12 +787,12 @@ ThreadID spawn (pointer closure, int target) {
 \label{code:spawn}
 \end{figure}
 
-Apart from exporting writes, function closures can also escape local heaps when
+Apart from globalizing writes, function closures can also escape local heaps when
 threads are spawned on other cores. For spawning on other cores, the
 environment of the function closure is lifted to the shared heap and then, the
 function closure is added to the target core's scheduler. This might introduce
 references to forwarding pointers in the spawning core's heap. We utilize the
-techniques developed for exporting writes to handle remote spawns in a similar
+techniques developed for globalizing writes to handle remote spawns in a similar
 fashion.
 
 Figure~\ref{code:spawn} shows the implementation of thread spawn. If the
@@ -817,7 +818,7 @@ The code for avoiding creation of references to forwarded objects (Lines 4--11
 in Figure~\ref{code:writeBarrier}) is implemented in the primitive library,
 where we have access to the lightweight thread scheduler.
 \cf{suspendTillGCAndLift} (line 10 in Figure~\ref{code:writeBarrier}) is
-carefully implemented to not contain an exporting write, which would cause
+carefully implemented to not contain an globalizing write, which would cause
 non-terminating recursive calls to the write barrier.
 
 \section{Integrating Software-Managed Cache Coherence (\smc)}
@@ -927,7 +928,7 @@ perform cache invalidation while reading an address that is less than
 \cf{MAX\_CSH\_ADDR} is set to point to the start of the CSH.
 
 Similarly, whenever an object is globalized to the CSH, we must ensure that the
-updates are visible to all of the cores. After an exporting write, we invoke
+updates are visible to all of the cores. After an globalizing write, we invoke
 \texttt{smcRelease()}, to flush any outstanding writes to the memory (Line 9 in
 Figure~\ref{code:write_barrier_smc}).
 
@@ -1153,9 +1154,9 @@ and analyze the impact of different optimizations.
 \label{sec:impact_cleanliness}
 
 Cleanliness information allows the runtime system to avoid preempting threads
-on a write barrier when the source of an exporting write is clean. In order to
+on a write barrier when the source of an globalizing write is clean. In order to
 study the impact of cleanliness, we removed the reference counting code and
-cleanliness check from the write barrier; thus, every exporting write results
+cleanliness check from the write barrier; thus, every globalizing write results
 in a thread preemption and stall. The results presented here were taken with
 programs running on 48-cores.
 
@@ -1191,7 +1192,7 @@ when encountering a write barrier.
 
 Recall that if all of the threads belonging to a core get preempted on a write
 barrier, a local major GC is \emph{forced}, which lifts all of the sources of
-exporting writes, fixes the references to forwarding pointers and unblocks the
+globalizing writes, fixes the references to forwarding pointers and unblocks the
 stalled threads. Hence, an increase in the number of preemptions leads to an
 increase in the number of local collections.
 
@@ -1224,7 +1225,7 @@ percentage of forced GCs if cleanliness information is not used. On average,
 information is not used, whereas it is less than 1\% otherwise.  On benchmarks
 like {\tt BarnesHut}, {\tt GameOfLife} and {\tt Mandelbrot}, where all of the
 threads tend to operate on a shared global data structure, there are a large
-number of exporting writes. On such benchmarks almost all local GCs are forced
+number of globalizing writes. On such benchmarks almost all local GCs are forced
 in the absence of cleanliness. This adversely affects the running time of
 programs.
 
@@ -1243,7 +1244,7 @@ therefore plays a significant role in the \prc design.
 
 \subsubsection{Impact of Immutability}
 
-If the source of an exporting write is immutable, we can make a copy of the
+If the source of an globalizing write is immutable, we can make a copy of the
 object in the shared heap and assign a reference to the new shared heap object
 to the target. Hence, we can ignore the reference count of such objects. Not
 all languages may have the ability to distinguish between mutable and immutable
@@ -1301,7 +1302,7 @@ Raytrace & 8.28 \ci{0.41} & 1112 \ci{22} \\
 \end{table}
 
 In order to assess the effectiveness of using heap sessions, we measured the
-percentage of instances where the source of an exporting write is clean with at
+percentage of instances where the source of an globalizing write is clean with at
 least one of the objects in the closure has a \cf{LOCAL\_MANY} reference.
 During such instances, we walk the current heap session to fix any references
 to forwarded objects. Without using heap sessions, we would have preempted the
@@ -1394,22 +1395,22 @@ language, does not require static analysis, and hence can be implemented as a
 lightweight runtime technique.
 
 Anderson~\cite{Anderson10} describes a local collector design (TGC) that
-triggers a local garbage collection on every exporting write of a mutable
+triggers a local garbage collection on every globalizing write of a mutable
 object, while immutable objects, that do not have any pointers, are copied to
 the shared heap. This scheme is a limited form of our cleanliness analysis. In
 our system, object cleanliness neither solely relies on mutability information,
 nor is it restricted to objects without pointer fields. Moreover, TGC does not
-exploit delaying exporting writes to avoid local collections. However, the
+exploit delaying globalizing writes to avoid local collections. However, the
 paper proposes several interesting optimizations that are applicable to our
-system. In order to avoid frequent mutator pauses on exporting writes, TGC's
+system. In order to avoid frequent mutator pauses on globalizing writes, TGC's
 local collection runs concurrently with the mutator. Though running compaction
 phase concurrently with the mutator would require read barriers, we can enable
 concurrent marking to minimize pause times. TGC also proposes watermarking
 scheme for minimizing stack scanning, which can be utilized in our system to
-reduce the stack scanning overheads during context switches and exporting
+reduce the stack scanning overheads during context switches and globalizing
 writes of clean objects.
 
-Marlow et al.~\cite{Marlow11} propose exporting only part of the transitive
+Marlow et al.~\cite{Marlow11} propose globalizing only part of the transitive
 closure to the shared heap, with the idea of minimizing the objects that are
 globalized. The rest of the closure is exported essentially on demand during
 the next access from another core. This design mandates the need for a read
@@ -1417,7 +1418,7 @@ barrier to test whether the object being accessed resides in the local heap of
 another core. However, since the target language is Haskell, there is an
 implicit read barrier on every load, to check whether the thunk has already
 been evaluated to a value. Since our goal is to eliminate read barriers, we
-choose to export the transitive closure on an exporting write.
+choose to export the transitive closure on an globalizing write.
 
 Software managed cached coherence (SMC)~\cite{SMC} for SCC provides a coherent,
 shared virtual memory to the programmer. However, the distinction between
