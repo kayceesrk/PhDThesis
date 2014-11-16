@@ -55,7 +55,7 @@ semantically shared-memory and message-passing paradigms are simply two sides
 of the same coin~\cite{Turon2013,Lauer1979}. This is illustrated by the fact
 that one model can easily be implemented using the other. For example,
 languages like Haskell~\cite{haskellsm}, ConcurrentML~\cite{Reppy99} and
-Maticore~\cite{Fluet2007} implement message-passing paradigms over shared
+Manticore~\cite{Fluet2007} implement message-passing paradigms over shared
 memory, and popular geo-distributed stores such as Dynamo~\cite{DeCandia2007},
 Cassandra~\cite{Lakshman2010} and Riak~\cite{Riak} implement shared-memory
 paradigm over message passing. Hence, strong memory consistency equally
@@ -90,12 +90,12 @@ are widely used in the construction of concurrent programs.
 \subsection{Cost of Strong Consistency}
 
 Despite the simplicity of strong consistency, with increasing scale, providing
-strong consistency guarantees is an increasingly difficult endeavour. Already,
+strong consistency guarantees is an increasingly difficult endeavor. Already,
 for performance reasons, modern optimizing compilers and multicore processors
 reorder code in ways that are not observable by sequential code, but are very
 much observable under concurrent
 execution~\cite{Demange2013,Sewell2010,Sarkar2011,Batty2011}. Hence, the
-semblance of strong consistency is broken. However, the harware memory models
+semblance of strong consistency is broken. However, the hardware memory models
 do provide coherence, and the language memory models ensure sequential
 consistency for programs that do not involve data races.
 
@@ -103,7 +103,7 @@ On the other hand, the complexity and power requirements for hardware support
 for cache coherence increases with increasing number of
 cores~\cite{Kavadias2010}. The scalability of hardware cache coherence
 mechanisms is mainly hindered by the scalability of coherence hardware, the
-storage requirements for cache metadata, and the effort to implement and verify
+storage requirements for cache meta data, and the effort to implement and verify
 complex coherence protocols. While there are indeed attempts to reduce the cost
 of cache coherence hardware on manycore systems~\cite{Martin2012}, hardware
 vendors increasingly opt for non cache coherent architectures. Graphics
@@ -152,14 +152,14 @@ However, frequent invalidations and flushes lead to poor cache behavior.
 Understandably, this process is notoriously difficult to get right.
 
 A geo-distributed store, where an object is replicated at multiple sites, is in
-essense similar to a non cache coherent architecture. Under weak consistency,
+essence similar to a non cache coherent architecture. Under weak consistency,
 programs operating over geo-distributed stores typically assume that the
 replicas of an object will \emph{eventually converge} to the same state. This
 behavior is commonly termed as eventual
 consistency~\cite{Terry1995,Bailis2013}. Unlike multicore architectures, the
 high latency in a geo-distributed setting warrants that the application accept
 concurrent conflicting updates in order to remain responsive. The updates are
-asynchronously propogated between the sites, and a \emph{deterministic}
+asynchronously propagated between the sites, and a \emph{deterministic}
 conflict resolution procedure ensures that the replicas eventually converge to
 the same state. The conflict resolution can either be automatic (such as
 last-writer-wins) or, in cases where the automatic resolution is non-trivial or
@@ -170,22 +170,22 @@ replicas will "eventually" converge to a same state, but does not provide any
 additional guarantees with respect to recency or causality of the operations.
 Hence, with two successive reads to the same object, there is no guarantee that
 the second read will see a "newer" version of the object. Worse still, a
-session might not see its own writes! These anamolies are reminiscent of the
-reorderings that can occur under language and hardware memory
-models~\cite{Demange2013,Sewell2010}, except that the anamolies in this case
+session might not see its own writes! These anomalies are reminiscent of the
+re-orderings that can occur under language and hardware memory
+models~\cite{Demange2013,Sewell2010}, except that the anomalies in this case
 are due to the fact that requests from same session can be serviced by
 different replicas.
 
 To address these concerns, several systems~\cite{COPS, Eiger, Walter, Li2012,
 HAT} have proposed that provide a lattice of stronger guarantees on demand.
 While defining new consistency guarantees and implementing them in a
-geo-distributed storage infrastructure is certainly a commendable endeavour,
+geo-distributed storage infrastructure is certainly a commendable endeavor,
 how does one match the consistency requirements at the application level with
 the consistency guarantees offered by the store? How does one ensure that the
 composition of consistency guarantees of different operations result in a
 sensible behavior? In short, developing correct concurrent applications under
 weak consistency requires large programmer effort in order to intricately
-reasoning about non-trivial memoty interactions on top an already
+reasoning about non-trivial memory interactions on top an already
 non-deterministic programming model.
 
 \section{My Thesis}
@@ -196,7 +196,7 @@ systems. The key idea is that, since consistency issues arise out of shared
 state mutation, by controlling and minimizing mutation one can simplify the
 problem of programming under weak memory consistency.
 
-The dissertation presents three major contributions, each focussed on
+The dissertation presents three major contributions, each focused on
 addressing a particular challenge associated with weakly consistent loosely
 coupled systems: (1) providing an efficient virtual shared memory abstraction
 over non cache coherent architectures by exploiting mutability information, (2)
@@ -217,11 +217,11 @@ The first contribution of this thesis is a series of techniques to efficiently
 hide the absence of cache coherence on a non cache coherent architecture, and
 provide the semblance of a shared coherent global address space with strong
 (sequential) consistency. We demonstrate this by designing and implementing
-\MMSCC, an extension of \MM~\cite{JFP14} compiler and runtime system targetted
+\MMSCC, an extension of \MM~\cite{JFP14} compiler and runtime system targeted
 at the 48-core memory-coupled, non cache coherent Intel SCC processor.
 
 Providing virtual shared memory on top of distributed memory architectures is
-certainly not a novel endeavour. Typically, non cache coherent architectures
+certainly not a novel endeavor. Typically, non cache coherent architectures
 are organized such that each core or a collection of cores share a cache
 coherent address space (termed as a "coherence domain"), and utilize explicit
 communication or DMA transfers for traffic across coherence domains. Such
@@ -238,11 +238,11 @@ the application level consistency requirements.
 Differing from these works our work utilizes the key property of
 mostly-functional languages (in our case, Standard ML enriched with concurrent
 threads and synchronous message passing), that is \emph{mutation is rare}, to
-efficiently realize a virtual memory abstration using just the language runtime
+efficiently realize a virtual memory abstraction using just the language runtime
 mechanisms. We also identify that non cache coherent architectures provide
 several different alternatives for inter-core communication such as on-chip
 high-speed message passing interconnect, scalable NoC interconnect for
-transferring data directly between memory banks without involing the
+transferring data directly between memory banks without involving the
 processors, and explicit cache control instructions. We aim to allow the same
 programs written for cache coherent architectures to efficiently run on non
 cache coherent architectures, while transparently mapping the source language
@@ -269,7 +269,7 @@ first-class channels as an abstraction for programming asynchronous distributed
 systems. A mostly functional programming language combined with synchronous
 message passing over first-class channels offers an attractive and generic
 model for expressing fine-grained concurrency. In particular, an expressive
-langauge like ConcurrentML~\cite{Reppy99} composable synchronous events, the
+language like ConcurrentML~\cite{Reppy99} composable synchronous events, the
 synchronous communication simplifies program reasoning by combining data
 transfer and synchronization into a single atomic unit. However, in a
 distributed setting, such a programming model becomes unviable due to two
@@ -297,10 +297,10 @@ significantly burdens the programmer.
 The key contribution of this work is to utilize synchronous communication as an
 abstraction to express programs for high-latency distributed systems, but
 \emph{speculatively} discharge the communications asynchronously, and ensure
-that the observable behavior mirros that of the original synchronous program.
+that the observable behavior mirrors that of the original synchronous program.
 The key discovery is that the necessary and sufficient condition for divergent
 behavior (mis-speculation) is the presence of happens-before cycle in the
-depen- dence relation between communication actions. We prove this theorem over
+dependence relation between communication actions. We prove this theorem over
 an axiomatic formulation that precisely captures the semantics of speculative
 execution. Utilizing this idea, we build an optimistic concurrency control
 mechanism for concurrent ML programs, on top of MultiMLton, capable of running
@@ -328,7 +328,7 @@ reminiscent distributed maps. The key-value pair is usually treated as
 registers, with a default last-write-wins (LWW) conflict resolution policy.
 Since a LWW register is not suitable for every use case, a small collection of
 convergent data types such as counters and sets~\cite{SSS} are also provided.
-Often the programmer has to coerec the problem at hand, which might naturally
+Often the programmer has to coerce the problem at hand, which might naturally
 be expressed as operations over a particular abstract datatype into the ones
 that are supported by the store. Unlike a concurrent program written for shared
 memory multicore processor, the operation on low-level convergent replicated
@@ -339,10 +339,10 @@ Often, without the necessary abstractions, it is impossible to achieve the
 desired semantics, and hence, the application ends up exposing the weak
 consistency behavior to the user.
 
-In addition, although the store might provide stronger consistency guaratnees,
+In addition, although the store might provide stronger consistency guarantees,
 the lack of precise description of these guarantees, and the inherent
 difficulty in mapping application-level consistency requirements to store-level
-guarnatees leads to subtle weak consistency bugs. Although there has been
+guarantees leads to subtle weak consistency bugs. Although there has been
 progress on the theoretical front to address the concern of reason about
 concurrent programs on eventually consistent stores~\cite{Burckhardt2014},
 realization of these techniques on full-fledged commercial store
@@ -352,7 +352,7 @@ eventually consistent systems.
 
 To address these issues, we present \quelea programming system for
 declaratively programming eventually consistent systems. Inspired by
-operation-based convergent replicated data types, data types in quelea are
+operation-based convergent replicated data types, data types in \quelea are
 defined in terms of its interfaces, and the effects that an operation has on a
 data type. Importantly, the state of an object is simply the set of all effects
 performed on this object. Every operation performs a \emph{fold} over this set,
@@ -362,7 +362,7 @@ operation witnesses all the effects, concurrent or otherwise, performed on the
 object so far, semantically conflicting operations can be resolved
 deterministically. As we will see, this particular abstraction is powerful
 enough to describe complex real-world scenarios including twitter-like
-microblogging service and an ebay-like auction site.
+micro-blogging service and an ebay-like auction site.
 
 Implementing and maintaining a robust, scalable geo-distributed store is a
 significant undertaking. Indeed, concerns such as liveness, replication,

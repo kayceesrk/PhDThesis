@@ -31,7 +31,7 @@ collection.} (\lc) design~\cite{Steele75, Doligez93, Steensgaard00, Anderson10,
 Marlow11, Auhagen11} that partitions the heap into local heaps on each core and
 a shared heap for cross-core communication. However, we observe that the cost
 of memory barriers utilized in preserving the heap invariants have significant
-costs. To eliminitate theses costs, we propose a new GC design (\prc) that
+costs. To eliminate theses costs, we propose a new GC design (\prc) that
 utilizes the ample concurrency offered by our programming model combined with a
 dynamic shape analysis to eliminate some of the GC overheads. This naturally
 leads to a GC design that focuses on \emph{procrastination}~\cite{mmgc},
@@ -65,9 +65,9 @@ designs. Finally, we present a comprehensive evaluation of the three designs.
 Intel SCC~\cite{Mattson2010} (Figure~\ref{fig:scc}) is a many-core processor
 with 48 P54C cores on a single chip, grouped as 24 tiles, organized in a 4
 $\times$ 6 mesh network with a bisection bandwidth of 256 Gb/s. The most
-interesting aspect of the SCC architecure is the complete lack of cache
+interesting aspect of the SCC architecture is the complete lack of cache
 coherence between the cores, and the presence of fast on-die message-passing
-network interface. The 24 tiles on the chip are divinded into 4 quadrants, and
+network interface. The 24 tiles on the chip are divided into 4 quadrants, and
 each quadrant is connected to a DDR3 memory controller. Each core has 16KB of
 private L1 instruction and data caches, and 256 KB of L2 cache shared with the
 other core on the same tile.
@@ -78,7 +78,7 @@ caches that are accessible across all of the cores. The data used in on-chip
 communication is read from MPB, cached in L1 cache, but bypasses the L2 cache.
 The cache uses no-allocate policy on writes, and L1 cache incorporates a
 write-combine buffer. According to the processor
-specifications~\cite{Mattson2010}, the read latencies in this architecure are:
+specifications~\cite{Mattson2010}, the read latencies in this architecture are:
 \begin{mathpar}
 \begin{array}{rcl}
 \textrm{LocalMPB} & = & 45~\kcore + 8~\kmesh \\
@@ -101,7 +101,7 @@ address spaces in the system.
 From the programmer's point of view, SCC resembles a cluster of nodes, with
 portions of memory shared between the cores. Each core runs a linux kernel
 image, and does not share any operating system services with the other cores.
-Since SCC does not provide harware cache coherence, it provides software
+Since SCC does not provide hardware cache coherence, it provides software
 support for managing coherence. First, SCC provides support for tagging a
 specific virtual address space as shared across all of the cores. Caching can
 also be selectively enabled on this address space; SCC tags this address space
@@ -113,7 +113,7 @@ MPBT as invalid L1 lines. In addition, the usual \cf{WBINVD} instruction can be
 used to flush and invalidate the L1 cache. Since the cores use write-combine
 buffers, a correct flushing procedure should also flush the write-combine
 buffers. SCC does not provide primitive support for this purpose, but
-write-combine buffers can easily be flushed in software by perfoming a series
+write-combine buffers can easily be flushed in software by performing a series
 of dummy writes to distinct memory locations, which fills the buffer and
 flushes any previous writes.
 
@@ -141,7 +141,7 @@ It is worthwhile pointing out that RCCE uses just the MPBs, while RCKMPI uses
 MPBs for small messages (less than 8KB --- the maximum message size that would
 fully fit in the MPB) and the DRAM for larger messages. Despite having a higher
 bandwidth and lower latency, the synchronization costs involved in transferring
-a large multi-part message over the MPB overweighs the benefits.
+a large multi-part message over the MPB outweighs the benefits.
 
 \section{Local Collector (\lc)}
 \label{sec:lc}
@@ -280,7 +280,7 @@ is located. Thus, there is no possibility of direct references between local
 heaps. Hence, the remembered stack strategy is safe with respect to garbage
 collection.
 
-\section{Read Barrier and Overheads}
+\subsection{Read Barrier and Overheads}
 
 In a mostly functional language like Standard ML, the number of reads are far
 likely to outweigh the number of mutations. Because of this fact, the aggregate
@@ -289,7 +289,7 @@ underlying architecture characteristics~\cite{Blackburn04}. To this end, we
 describe our read barrier design, and the cost/benefit of read barriers in our
 system.
 
-\subsection{Read Barrier Design}
+\subsubsection{Read Barrier Design}
 
 \begin{figure}
 \begin{lstlisting}
@@ -362,7 +362,7 @@ described in~\cite{Bacon03}. Eager read barrier elimination has marked
 location is loaded into a register, but all further accesses can elide
 executing the barrier.
 
-\subsection{Evaluation}
+\subsubsection{Evaluation}
 
 \begin{figure}
   \centering
@@ -947,8 +947,8 @@ mutable. The channel itself is simply a data structure implemented over shared
 memory. However, the communication on the SCC over libraries such as RCCE and
 RCKMPI is optimized for SPMD programming model, where the sender and the
 receiver know each other's identities, and are expected to arrive at the
-communicaiton point at the same time. Hence, considering the fact that MPB
-memory is on 8KB, both RCCE and RCKMPI use busy waiting strategy for intercore
+communication point at the same time. Hence, considering the fact that MPB
+memory is on 8KB, both RCCE and RCKMPI use busy waiting strategy for inter-core
 communication. Thus, careful design is needed to map \MM communication
 abstraction over the MPB.
 
@@ -1085,7 +1085,7 @@ such that the input size and the number of threads are tunable. Out of the
 total bytes allocated during the program execution, on average 5.4\% is
 allocated in the shared heap. Thus, most of the objects allocated are collected
 locally, without the need for stalling all of the mutators. The allocation rate
-on the SCC is typically much lower than comparable general purpose commerical
+on the SCC is typically much lower than comparable general purpose commercial
 offerings. On the SCC, not only is the processor slow (533MHz) but also the
 serial memory bandwidth for our experimental setup is only around 70 MB/s.
 
@@ -1104,7 +1104,7 @@ serial memory bandwidth for our experimental setup is only around 70 MB/s.
   \label{fig:time}
 \end{figure}
 
-Figurue~\ref{fig:time} presents the speedup results and illustrates space-time
+Figure~\ref{fig:time} presents the speedup results and illustrates space-time
 trade-offs critical for any garbage collector evaluation. Among the three
 variants, SMC performs the best (Figure~\ref{fig:speedup}) due to the fact that
 most of the accesses under SMC is cached, unlike \lc and \prc. We also see that
@@ -1366,9 +1366,9 @@ reduced.
 \section{Related Work}
 
 Over the years, several local collector designs ~\cite{Steele75, Doligez93,
-Steensgaard00, Anderson10} have been proposed for multithreaded programs.
+Steensgaard00, Anderson10} have been proposed for multi-threaded programs.
 Recently, variations of local collector design have been adopted for
-multithreaded, functional language runtimes like GHC~\cite{Marlow11} and
+multi-threaded, functional language runtimes like GHC~\cite{Marlow11} and
 Manticore~\cite{Auhagen11}. Doligez et al.~\cite{Doligez93} proposed a local
 collector design for ML with threads where all mutable objects are allocated
 directly on the shared heap, and immutable objects are allocated in the local

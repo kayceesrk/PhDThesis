@@ -181,8 +181,8 @@ the communication has \emph{exactly-once} requirement. If a receiver consumes a
 sent value, then no other sender can consume the same value. Thus, synchronous
 communication needs coordination between the communicating parties for
 enforcing the exactly-once requirement. Hence, while first-class channel based
-synchornous communication provides a good abstraction, its correctness and
-performance implication in a high latency, weakly consistent setting prevets
+synchronous communication provides a good abstraction, its correctness and
+performance implication in a high latency, weakly consistent setting prevents
 its utility in a weakly consistent loosely coupled environment.
 
 While asynchronous extensions such as \acml~\cite{Ziarek11} can be used to gain

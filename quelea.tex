@@ -177,7 +177,7 @@ While strong consistency is an easily stated property, it masks the reality
 underlying large-scale distributed systems with respect to non-uniform latency,
 availability and network partitions~\cite{Brewer2000,Gilbert2002}. Indeed,
 modern web services, which aim to provide an "always on" experience,
-overwhelmingly favour availability and partition tolerance over strong
+overwhelmingly favor availability and partition tolerance over strong
 consistency. To this end, several \emph{weak consistency} models such as
 eventual consistency, causal consistency, session guarantees, and timeline
 consistency have been proposed.
@@ -246,7 +246,7 @@ consistent data stores, and introduces \quelea\ contracts as a proposed
 solution to overcome these issues in Section~\ref{q_sec:motivation}.
 Section~\ref{q_sec:lang} provides more details the contract language, and its
 mapping to the store consistency levels. Section~\ref{q_sec:meta-theory}
-presents the meta-theorietic result that certifies the correctness of the
+presents the meta-theoretic result that certifies the correctness of the
 \quelea contract enforcement. Section~\ref{q_sec:txns} introduces transaction
 contracts and classification. Section~\ref{q_sec:impl} describes the
 implementation and provides details about the optimizations needed to make the
@@ -417,7 +417,7 @@ constraint. A subsequent \cf{getBalance} operation, that happens to witness all
 the previous operations, would report a negative balance.
 
 It is easy to see that preventing concurrent \cf{withdraw} operations
-eliminates this anamoly. This can be done by insisting that \cf{withdraw} be
+eliminates this anomaly. This can be done by insisting that \cf{withdraw} be
 executed as a strongly consistent operation. Despite this strengthening,
 \cf{getBalance} operation may incorrectly report a negative balance to the end
 user. Consider the execution shown in fig.~\ref{fig:negativeBalanceAnomaly},
@@ -427,7 +427,7 @@ account object. As the \cf{vis} edge indicates, operation \cf{withdraw(50)} in
 session 2, witnesses the effects of \cf{deposit(100)} from session 1, concludes
 that there is sufficient balance, and completes successfully. However, the
 \cf{getBalance} operation may only witness this successful withdraw, but not
-the causally preceding \cf{dopsit}, and reports the balance of negative 50 to
+the causally preceding \cf{deposit}, and reports the balance of negative 50 to
 the user.
 
 Under eventual consistency, the users may also be exposed to other forms of
@@ -1085,7 +1085,7 @@ $\Theta$, a representation of the store as a map from replicas to their local
 states. The local state of a replica $r$ (i.e., $\Theta(r)$) is a set of
 effects that are currently visible at $r$. An operation $op$ performed at
 replica $r$ can only witness the set of effects ($\Theta(r)$) visible at $r$.
-To avoid too many paranthesis in our formal presentation, we represent
+To avoid too many parenthesis in our formal presentation, we represent
 operation $op$, whose contract is in consistency class $\tau$, as $op_\tau$
 instead of the usual $\langle op,\tau \rangle$. For the sake of clarity, we
 only consider a single replicated object of well-defined type (for eg: a
@@ -1123,14 +1123,14 @@ $R$ is a binary relation, we write $R(\eff)$ to denote the set of all $\eff'$
 such that $(\eff,\eff') \in R$.  Conversely, we write $R^{-1}(\eff)$ to denote
 the set of all $\eff'$ such that $(\eff',\eff) \in R$.
 
-Basic gurantee provided by the store is causal visibility, which is captured by
+Basic guarantee provided by the store is causal visibility, which is captured by
 the rule $\rulelabel{EffVis}$ as a condition for an effect to be visible at a
 replica. The rule makes an effect ($\eff$) visible at a replica $r$ only after
 all the effects that causally precede $\eff$ are made visible at $r$.  It is
 important to note that that enforcing causal visibility does not require any
 inter-replica coordination. Any eventually consistent store can provide causal
 visibility while being eventually consistent.  Therefore, we do not lose any
-generality by assuming that the store provides causal visiblity.
+generality by assuming that the store provides causal visibility.
 
 Rule $\rulelabel{Oper}$ is an auxiliary reduction of the
 \begin{mathpar}
@@ -1537,7 +1537,7 @@ $\E' \models \cv_{\tau}[\eff/\cureff]$
         % Off-by-one correction
         \npp
 
-        \item SCase 2: Hypotheses (after abbreviating the occurance
+        \item SCase 2: Hypotheses (after abbreviating the occurrence
         of$(\Rso' \cup \Rvis')^{+}$ as {\sf hbo'}):
         \begin{mathpar}
         \begin{array}{cr}
@@ -1662,7 +1662,7 @@ $\E' \models \cv_{\tau}[\eff/\cureff]$
           \Rvis'(a,\eff) & H\npp\\
         \end{array}
         \end{mathpar}
-        Introducting disjunction:
+        Introducing disjunction:
         \begin{mathpar}
         \begin{array}{cr}
           (\Rvis' \cup \Rso')(a,\eff) & H\npp\\
@@ -2225,7 +2225,7 @@ has been instantiated, but has not yet been inserted into the store. Since the
 causally preceding effect $m$ has not yet been written to the store, no
 operation will witness $e1$ and $e2$ while the transaction in progress. After
 the transaction has finished execution, we insert $m$ into the backing store,
-marking all the effects from the transactions as a depedence for $m$. Now any
+marking all the effects from the transactions as a dependence for $m$. Now any
 replica which includes one of the effects from the transaction must include
 $m$, and transitively must include every effect from the transaction. This
 ensures atomicity and satisfies the RC requirement.
@@ -2300,7 +2300,7 @@ summarization process.
 To this end, we adopt a novel summarization strategy that builds on the
 causality property of the store. Figure~\ref{fig:impl_sum_disk} illustrates the
 summarization strategy. Suppose the original set of effects on an object are
-$o1$, $o2$ and $o3$. Whe summarized, the new effects yielded are $n1$ and $n2$.
+$o1$, $o2$ and $o3$. When summarized, the new effects yielded are $n1$ and $n2$.
 We first instantiate a summarization marker $s$, and similar to transaction
 marker, we do not insert it into the store immediately. We insert the new
 effects $n1$ and $n2$, with strong consistency, including $s$ as a dependence.
