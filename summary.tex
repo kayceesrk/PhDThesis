@@ -14,12 +14,10 @@ an abstraction over asynchronous distributed systems. \quelea permits
 declarative reasoning about consistency guarantees for programs over eventually
 consistent data stores.
 
-\section{Future Work}
-
-In this section, we present the future work. This discussion is split based on
+In this chapter, we present the future work. This discussion is split based on
 the three contributions.
 
-\subsection{\MMSCC}
+\section{\MMSCC}
 
 The main hindrance to scalability of our \MMSCC collector is the stop-the-world
 nature of the shared heap collection. While shared heap collections are
@@ -59,7 +57,7 @@ design is well-suited for mixed mode applications such as web-browsers, where
 both latency and throughput are important for distinct parts of the same
 program.
 
-\subsection{\rxcml}
+\section{\rxcml}
 
 While \rxcml provides composable synchronous reasoning for asynchronous
 distributed systems, the implementation does not address the challenge of
@@ -86,7 +84,7 @@ execution to recover stronger consistency guarantees. Equipped with \quelea
 style contracts, \rxcml can bring speculative execution for user-defined
 replicated data types.
 
-\subsection{\quelea}
+\section{\quelea}
 
 Contracts in \quelea are written by the programmer by mentally translating the
 application level consistency specification into visibility constraints on
