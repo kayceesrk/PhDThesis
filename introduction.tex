@@ -27,7 +27,8 @@ from different tasks are interleaved in some total order. Such a system is said
 to provide \emph{strong memory consistency}. Strong consistency is a natural
 extension of uniprocessor memory model to a multiprocessor setting. While this
 strong consistency does not completely eliminate the possibility of concurrency
-bugs, it certainly simplifies reasoning about the behavior concurrent programs.
+bugs, it certainly simplifies reasoning about the behavior of concurrent
+programs.
 
 \subsection{Implications of the Programming Model}
 
@@ -69,7 +70,7 @@ to achieve strong consistency. Shared memory multicore processors designed for
 mainstream computing markets tend to have hierarchical memory organization,
 with private and shared multi-level caches, and utilize a hardware protocol for
 keeping the caches coherent~\cite{Martin2012}. Coherence can be viewed as a
-mechanism that transmits a write to a memory location to all the cache copies
+mechanism that transmits a write to a memory location to all the cached copies
 of the same location. Typically, each cache line has meta-data attached to it
 which indicate whether the local cacheline is invalid, shared or modified. When
 a memory location corresponding to a shared cache line is updated, coherence
@@ -96,23 +97,24 @@ reorder code in ways that are not observable by sequential code, but are very
 much observable under concurrent
 execution~\cite{Demange2013,Sewell2010,Sarkar2011,Batty2011}. Hence, the
 semblance of strong consistency is broken. However, the hardware memory models
-do provide coherence, and the language memory models ensure sequential
-consistency for programs that do not involve data races.
+do provide coherence, and to the benefit of the programmers, the language
+memory models ensure sequential consistency for programs that do not involve
+data races.
 
 On the other hand, the complexity and power requirements for hardware support
 for cache coherence increases with increasing number of
 cores~\cite{Kavadias2010}. The scalability of hardware cache coherence
 mechanisms is mainly hindered by the scalability of coherence hardware, the
-storage requirements for cache meta data, and the effort to implement and verify
-complex coherence protocols. While there are indeed attempts to reduce the cost
-of cache coherence hardware on manycore systems~\cite{Martin2012}, hardware
-vendors increasingly opt for non cache coherent architectures. Graphics
-processing units (GPUs)~\cite{Luebke2004}, the Intel Single-chip Cloud Computer
-(SCC)~\cite{Mattson2010}, the Cell BE processor~\cite{Kahle2005}, and the
-Runnemede prototype~\cite{Carter2013} are representative examples of non cache
-coherent architectures.
+storage requirements for cache meta data, and the effort to implement and
+verify complex coherence protocols. While there are indeed attempts to reduce
+the cost of cache coherence hardware on manycore systems~\cite{Martin2012},
+hardware vendors increasingly opt for non cache coherent architectures.
+Graphics processing units (GPUs)~\cite{Luebke2004}, the Intel Single-chip Cloud
+Computer (SCC)~\cite{Mattson2010}, the Cell BE processor~\cite{Kahle2005}, and
+the Runnemede prototype~\cite{Carter2013} are representative examples of non
+cache coherent architectures.
 
-Applications that rely upon strong consistency is a distributed setting have to
+Applications that rely upon strong consistency in a distributed setting have to
 pay the cost of reduced \emph{availability} in the presence of network
 partitions and high \emph{latency}. In particular, Brewer's well-known CAP
 theorem~\cite{Brewer2000,Brewer2012,Gilbert2002} states that a distributed
@@ -235,13 +237,13 @@ These works typically expose the distribution in the programming model, provide
 specialized hooks into the architectural features, or are simply agnostic of
 the application level consistency requirements.
 
-Differing from these works our work utilizes the key property of
+Differing from these works, \MMSCC utilizes the key property of
 mostly-functional languages (in our case, Standard ML enriched with concurrent
 threads and synchronous message passing), that is \emph{mutation is rare}, to
-efficiently realize a virtual memory abstraction using just the language runtime
-mechanisms. We also identify that non cache coherent architectures provide
-several different alternatives for inter-core communication such as on-chip
-high-speed message passing interconnect, scalable NoC interconnect for
+efficiently realize a virtual memory abstraction using just the language
+runtime mechanisms. We also identify that non cache coherent architectures
+provide several different alternatives for inter-core communication such as
+on-chip high-speed message passing interconnect, scalable NoC interconnect for
 transferring data directly between memory banks without involving the
 processors, and explicit cache control instructions. We aim to allow the same
 programs written for cache coherent architectures to efficiently run on non
@@ -285,8 +287,8 @@ coordination between nodes that might potentially consume a particular value on
 the channel.
 \end{itemize}
 
-While switching to an explicit asynchronous communication model between nodes
-can improve performance, it complicates inter-node synchronization and
+While switching to an explicit asynchronous process-oriented communication
+model avoids these issues, it complicates inter-node synchronization and
 introduces naming issues. No longer can a programmer abstractly reason about a
 collection of nodes that might send or receive values on a named channel, but
 has to identify, communicate and coordinate with individual nodes.
