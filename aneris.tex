@@ -54,7 +54,7 @@ designs. Finally, we present a comprehensive evaluation of the three designs.
 
 \section{The Intel Single-chip Cloud Computer}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{center}
 \includegraphics{Figures/SCC.pdf}
 \end{center}
@@ -156,9 +156,9 @@ global synchronization for every collection.
 
 \subsection{Heap Architecture}
 
-\begin{figure}
+\begin{figure}[t]
 \centering
-\includegraphics[width=1\textwidth]{Figures/LocalCollector.pdf}
+\includegraphics[width=0.8\textwidth]{Figures/LocalCollector.pdf}
 \caption{Local collector heap organization for the SCC}
 \label{fig:lc}
 \end{figure}
@@ -582,10 +582,10 @@ objects is always computed by structure. Hence, it is safe to replicate
 immutable objects. If the object is already in the shared heap, there is no
 need to move this object.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
-\subfigure[Tree-structured object closure]{\label{fig:cleanliness_tree}\includegraphics[width=0.8\textwidth]{Figures/Cleanliness_Tree}}\\
-\subfigure[Session-based cleanliness]{\label{fig:cleanliness_session}\includegraphics[width=0.8\textwidth]{Figures/Cleanliness_Session}}
+\subfigure[Tree-structured object closure]{\label{fig:cleanliness_tree}\includegraphics[width=0.7\textwidth]{Figures/Cleanliness_Tree}}\\
+\subfigure[Session-based cleanliness]{\label{fig:cleanliness_session}\includegraphics[width=0.7\textwidth]{Figures/Cleanliness_Session}}
 \caption{Utilizing object closure cleanliness information for globalizing writes to avoid references to forwarded objects.}
 \label{fig:cleanliness_examples}
 \end{figure}
@@ -638,7 +638,7 @@ object closure to the shared heap (Figure~\ref{code:lift}).
 \subsection{Write Barrier}
 \label{sec:write_barrier}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 Val writeBarrier (Ref r, Val v) {
   if (isObjptr(v)) {
@@ -696,7 +696,7 @@ the mutator never encounters a reference to a forwarded object. \\
 
 \subsubsection{Lifting Objects to the Shared Heap}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 Set imSet;
 void liftHelper (pointer* op, pointer* frontierP) {
@@ -831,9 +831,9 @@ in both cases is the fact that Standard ML is a mostly functional language, and
 \MM's ability to discriminate objects at runtime based on the mutability
 information.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
-\includegraphics[width=1\textwidth]{Figures/SMC_Collector.pdf}
+\includegraphics[width=0.8\textwidth]{Figures/SMC_Collector.pdf}
 \caption{Heap design utilizing SCC's software-managed cache coherence capability.}
 \label{fig:smc}
 \end{figure}
@@ -1091,7 +1091,7 @@ serial memory bandwidth for our experimental setup is only around 70 MB/s.
 
 \subsection{Performance}
 
-\begin{figure}
+\begin{figure}[t]
   \centering
   \subfigure[Speedup]{\label{fig:speedup}\includegraphics[width=0.45\textwidth]{Graphs/speedup_scc_heap}}
   \subfigure[Total time (48 cores)]{\label{fig:time_SCC}\includegraphics[width=0.45\textwidth]{Graphs/time_scc}}
@@ -1196,7 +1196,7 @@ globalizing writes, fixes the references to forwarding pointers and unblocks the
 stalled threads. Hence, an increase in the number of preemptions leads to an
 increase in the number of local collections.
 
-\begin{table}
+\begin{table}[t]
 \begin{center}
 \caption{Average percentage of forced GCs out of the total number of local
 major GCs.}
@@ -1325,7 +1325,7 @@ significant overheads during tracing.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.7\textwidth]{Graphs/speedup_scc_chan}
+\includegraphics[width=0.5\textwidth]{Graphs/speedup_scc_chan}
 \caption{Performance comparison of first-class channel communication over the
 MPB \cf{(MBP+)} vs solely over the shared memory \cf{(MPB-)}: Geometric mean
 over 8 benchmarks.}

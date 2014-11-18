@@ -257,9 +257,9 @@ work and conclusions.
 \section{System Model}
 \label{q_sec:sysmod}
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.65\columnwidth]{Figures/SystemModel}
+\includegraphics[width=0.5\columnwidth]{Figures/SystemModel}
 \caption{\quelea system model.}
 \label{fig:sysmod}
 \end{figure}
@@ -391,7 +391,7 @@ account operations such that (1) the balance remains non-negative and (2) the
 \cf{getBalance} operation never incorrectly returns a negative balance. Let us
 first consider the anomalies that could arise under eventual consistency.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
 \subfigure[Unsafe withdraw]{\label{fig:unsafeWithdrawAnomaly}\includegraphics[width=0.34\columnwidth]{Figures/Motivation4}}
 \hfill
@@ -905,7 +905,7 @@ strong, causal and eventual consistency guarantees. The semantics also
 serves as a high-level description of our implementation of the store
 underlying \quelea.
 
-\begin{figure*}
+\begin{figure*}[t]
 \textbf{RDT Specification Language}\\
 \begin{minipage}{\columnwidth}
 \begin{mathpar}
@@ -961,8 +961,8 @@ underlying \quelea.
 \end{figure*}
 
 
-\begin{figure*}
-\textbf{Auxiliary Reductions} \;
+\begin{figure*}[t]
+\textbf{Auxiliary Reduction} \;
   \fbox{\(\auxred{\Theta} {(\E,\langle s,i,op \rangle)} {r} {(\E',\eff)}\)}\\
 
 \begin{minipage}{\textwidth}
@@ -2152,7 +2152,7 @@ static contract classification, and proof obligations are discharged with the
 help of the Z3~\cite{Z3} SMT solver. Figure~\ref{fig:impl_mod} illustrates the
 overall system architecture.
 
-\begin{figure}
+\begin{figure}[t]
 \begin{center}
 \includegraphics[width=\columnwidth]{Figures/ImplModel}
 \end{center}
@@ -2401,9 +2401,9 @@ average inter-region latency was 85ms.
 
 \begin{figure*}[t]
   \centering
-  \subfigure[Latency]{\label{grf:BA-lat}\includegraphics[width=0.45\textwidth]{graphs/BA-lat.pdf}}
-  \subfigure[Throughput]{\label{grf:BA-tp}\includegraphics[width=0.45\textwidth]{graphs/BA-tp.pdf}}
-  \subfigure[Throughput vs. Latency]{\label{grf:BA-tp-vs-lat}\includegraphics[width=0.45\textwidth]{graphs/BA-tp-vs-lat.pdf}}
+  \subfigure[Latency]{\label{grf:BA-lat}\includegraphics[width=0.31\textwidth]{graphs/BA-lat.pdf}}
+  \subfigure[Throughput]{\label{grf:BA-tp}\includegraphics[width=0.31\textwidth]{graphs/BA-tp.pdf}}
+  \subfigure[Throughput vs. Latency]{\label{grf:BA-tp-vs-lat}\includegraphics[width=0.31\textwidth]{graphs/BA-tp-vs-lat.pdf}}
 	\caption{Bank account performance.}
   \label{grf:BA}
 \end{figure*}
@@ -2440,9 +2440,9 @@ the benefit of fine-grained contract classification in \quelea.
 
 \begin{figure*}[t]
   \centering
-  \subfigure[Latency]{\label{grf:LWW-txn-lat}\includegraphics[width=0.45\textwidth]{graphs/LWW-txn-lat.pdf}}
-  \subfigure[Throughput]{\label{grf:LWW-txn-tp}\includegraphics[width=0.45\textwidth]{graphs/LWW-txn-tp.pdf}}
-  \subfigure[Throughput vs. Latency]{\label{grf:LWW-txn-tp-vs-lat}\includegraphics[width=0.45\textwidth]{graphs/LWW-txn-tp-vs-lat.pdf}}
+  \subfigure[Latency]{\label{grf:LWW-txn-lat}\includegraphics[width=0.31\textwidth]{graphs/LWW-txn-lat.pdf}}
+  \subfigure[Throughput]{\label{grf:LWW-txn-tp}\includegraphics[width=0.31\textwidth]{graphs/LWW-txn-tp.pdf}}
+  \subfigure[Throughput vs. Latency]{\label{grf:LWW-txn-tp-vs-lat}\includegraphics[width=0.31\textwidth]{graphs/LWW-txn-tp-vs-lat.pdf}}
 	\caption{LWW register transaction performance.}
   \label{grf:LWW-txn}
 \end{figure*}
@@ -2468,9 +2468,9 @@ a minimal overhead for the expressive and stronger \quelea programming model.
 
 \begin{figure}[t]
   \centering
-  \subfigure[Latency]{\label{grf:rubis-lat}\includegraphics[width=0.45\textwidth]{graphs/Rubis-lat.pdf}}
-  \subfigure[Throughput]{\label{grf:rubis-tp}\includegraphics[width=0.45\textwidth]{graphs/Rubis-tp.pdf}}
-  \subfigure[Throughput vs. Latency]{\label{grf:Rubis-tp-vs-lat}\includegraphics[width=0.45\textwidth]{graphs/Rubis-tp-vs-lat.pdf}}
+  \subfigure[Latency]{\label{grf:rubis-lat}\includegraphics[width=0.31\textwidth]{graphs/Rubis-lat.pdf}}
+  \subfigure[Throughput]{\label{grf:rubis-tp}\includegraphics[width=0.31\textwidth]{graphs/Rubis-tp.pdf}}
+  \subfigure[Throughput vs. Latency]{\label{grf:Rubis-tp-vs-lat}\includegraphics[width=0.31\textwidth]{graphs/Rubis-tp-vs-lat.pdf}}
 	\caption{Rubis bidding mix performance.}
   \label{grf:rubis}
 \end{figure}

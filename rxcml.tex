@@ -328,7 +328,7 @@ received message \cf{X} must always appear after message \cf{X} to every
 member. Here, message \cf{Y} is said to be \emph{causally dependent} on
 message \cf{X}.
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 datatype 'a bchan = BCHAN of ('a chan list (*val*) *
 															unit chan list (*ack*))
@@ -378,6 +378,7 @@ message before the subsequent causally ordered message is generated. We can
 build a distributed group chat server using the broadcast channel as shown
 below.
 
+\vfill
 \lstset{numbers=none}
 \begin{lstlisting}
 (* bc is broadcast chan, daemon is spawn as a separate thread *)
@@ -407,9 +408,9 @@ distribution or during acknowledgment reception. Unfortunately, injecting
 asynchrony at either point is not guaranteed to preserve causal ordering on the
 semantics of the program.
 
-\begin{figure}
+\begin{figure}[t]
 \begin{centering}
-	\includegraphics[width=\textwidth] {Figures/ChatServer_AsyncValue}
+	\includegraphics[width=0.8\textwidth] {Figures/ChatServer_AsyncValue}
 	\caption{Incorrect execution due to unsafe relaxation of sends during
 	broadcast. Dotted arrow represents in-flight message.}
 	\label{fig:CS_asend_value}
@@ -596,7 +597,7 @@ $\alpha, \beta$ and $\alpha \hb \beta \hb \alpha$.
 \end{definition}
 
 \lstset{numbers=none}
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 (* current thread is t1 *)
 val t2 = spawn (fn () => recv c2; print "2"; recv c1)
@@ -612,12 +613,12 @@ val _ = send(c2,v2)
 \end{figure}
 \lstset{numbers=left,numberstyle=\tiny,stepnumber=1,frame=single}
 
-\begin{figure}
-\begin{minipage}{0.5\textwidth}
+\begin{figure}[t]
+\begin{minipage}{0.45\textwidth}
 \subfigure[Well-formed execution]{\label{fig:well}\includegraphics[width=1\textwidth]{Figures/AxiomaticExecution}}
 \end{minipage}
 \hfill
-\begin{minipage}{0.5\textwidth}
+\begin{minipage}{0.45\textwidth}
 \subfigure[Ill-formed execution]{\label{fig:ill}\includegraphics[width=1\textwidth]{Figures/AxiomaticExecution-1}}
 \end{minipage}
 \caption{Potential axiomatic executions of the CML program presented in Figure~\ref{code:simple}.}
@@ -1268,9 +1269,9 @@ intention (along with a value in the case of a send operation), is broadcast to
 every other \rxcml instance. Importantly, the application thread performing the
 send does not block and \emph{speculatively} continues execution.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.75\textwidth]{Figures/CommunicationManager}
+\includegraphics[width=0.65\textwidth]{Figures/CommunicationManager}
 \caption{Communication manager behavior during a send and its matching receive.}
 \label{fig:comm_mgr}
 \end{figure}
@@ -1427,7 +1428,7 @@ the lock. It is up to the application to ensure that the lock servers are
 correctly used, and when obtaining multiple locks, locks are sorted to avoid
 deadlocks.
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.5\textwidth]{Figures/OLTC}
 \caption{A possible serializability violation that arises because of
