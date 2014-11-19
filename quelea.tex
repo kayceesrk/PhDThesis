@@ -353,7 +353,7 @@ added to the state of the object at the current replica, and asynchronously
 sent to other replicas. The implementation of the bank account operations in
 \quelea is given in Figure~\ref{fig:ex}:
 
-\begin{figure}
+\begin{figure}[t]
 \begin{codehaskell}
 data Acc = Deposit Int | Withdraw Int | GetBalance
 
@@ -393,11 +393,11 @@ first consider the anomalies that could arise under eventual consistency.
 
 \begin{figure}[t]
 \centering
-\subfigure[Unsafe withdraw]{\label{fig:unsafeWithdrawAnomaly}\includegraphics[width=0.34\columnwidth]{Figures/Motivation4}}
+\subfigure[Unsafe withdraw]{\label{fig:unsafeWithdrawAnomaly}\includegraphics[width=0.31\columnwidth]{Figures/Motivation4}}
 \hfill
-\subfigure[Negative balance]{\label{fig:negativeBalanceAnomaly}\includegraphics[width=0.31\columnwidth]{Figures/Motivation2}}
+\subfigure[Negative balance]{\label{fig:negativeBalanceAnomaly}\includegraphics[width=0.28\columnwidth]{Figures/Motivation2}}
 \hfill
-\subfigure[Missing update]{\label{fig:missingUpdateAnomaly}\includegraphics[width=0.26\columnwidth]{Figures/Motivation1}}
+\subfigure[Missing update]{\label{fig:missingUpdateAnomaly}\includegraphics[width=0.24\columnwidth]{Figures/Motivation1}}
 \caption{Anomalies possible under eventual consistency for the get balance operation.}
 \label{fig:ba_anomalies}
 \end{figure}

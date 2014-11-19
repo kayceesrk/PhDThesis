@@ -242,7 +242,7 @@
     \stop
   \fi
 }
-\LoadClass[9pt,twoside]{report}[2004/02/16]
+\LoadClass[10pt,twoside]{report}[2004/02/16]
 
 % Got these lines using "grep dotted report.cls" and changed
 % as needed for new \@dottedtocline \vskip parameter.
@@ -629,9 +629,9 @@
 }
 \setlength{\paperheight}{11truein}
 \setlength{\paperwidth}{8.5truein}
-\renewcommand*{\baselinestretch}{1.1}
-\setlength{\evensidemargin}{0.25truein}
-\setlength{\oddsidemargin}{0.25truein}
+\renewcommand*{\baselinestretch}{1.3}
+\setlength{\evensidemargin}{0.5truein}
+\setlength{\oddsidemargin}{0.5truein}
 \setlength{\textheight}{8.75truein}
 \setlength{\textwidth}{6truein}
 \clubpenalty=10000

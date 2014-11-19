@@ -291,7 +291,7 @@ system.
 
 \subsubsection{Read Barrier Design}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 pointer readBarrier (pointer p) {
   if (!isPointer(p)) return p;
@@ -364,7 +364,7 @@ executing the barrier.
 
 \subsubsection{Evaluation}
 
-\begin{figure}
+\begin{figure}[t]
   \centering
   \includegraphics[width=0.9\textwidth]{Graphs/RB_overhead}
 	\caption{Read barrier overhead as a percentage of mutator time.}
@@ -512,9 +512,9 @@ reference, but that all of these references originate from the current session.
 \cf{GLOBAL} indicates that the object has at least one reference that
 originates from outside the current session.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.6\textwidth]{Figures/std_reference_count}
+\includegraphics[width=0.5\textwidth]{Figures/std_reference_count}
 \caption{State transition diagram detailing the behavior of the reference
 counting mechanism with respect to object \cf{x} involved in an assignment,
 \cf{r := x}, where \cf{P}$_\textrm{\cf{r}}$ = \cf{isInCurrentSession(r)}.}
@@ -874,7 +874,7 @@ observation is that the baseline local collector design has both read and write
 barriers; our idea is to integrate the cache control primitives into the memory
 barriers.
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 pointer readBarrier (pointer p) {
   if (!isPointer(p)) return p;
@@ -895,12 +895,10 @@ pointer readBarrier (pointer p) {
 \label{code:read_barrier_smc}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 val writeBarrier (Ref r, Val v) {
-  if (isObjptr(v) &&
-			isInSharedHeap(r) &&
-			isInLocalHeap(v)) {
+  if (isObjptr(v) && isInSharedHeap(r) && isInLocalHeap(v)) {
 			/* Move transitive object closure to shared
 			 * heap, and install forwarding pointers */
 			v = globalize (v);
@@ -929,7 +927,7 @@ perform cache invalidation while reading an address that is less than
 
 Similarly, whenever an object is globalized to the CSH, we must ensure that the
 updates are visible to all of the cores. After an globalizing write, we invoke
-\texttt{smcRelease()}, to flush any outstanding writes to the memory (Line 9 in
+\texttt{smcRelease()}, to flush any outstanding writes to the memory (Line 7 in
 Figure~\ref{code:write_barrier_smc}).
 
 \subsection{Mapping Channel Communication over Message-Passing Buffers}
@@ -1160,7 +1158,7 @@ cleanliness check from the write barrier; thus, every globalizing write results
 in a thread preemption and stall. The results presented here were taken with
 programs running on 48-cores.
 
-\begin{table}
+\begin{table}[t]
 \begin{center}
 \caption{Average number of preemptions on write barrier.}
 \label{tab:preempt}

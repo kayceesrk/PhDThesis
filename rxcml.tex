@@ -209,7 +209,7 @@ synchronize on a matching receiver.
 To illustrate, consider the following simple program:
 
 \begin{center}
-\includegraphics{Figures/IntroCode1}
+\includegraphics[scale=0.75]{Figures/IntroCode1}
 \end{center}
 
 \noindent Thread T1 performs a synchronous send on channel \cf{c1} that is
@@ -223,9 +223,9 @@ upon evaluation of \cf{g()}.  The observable behavior of the program in both
 cases (i.e., treating the initial send synchronously or asynchronously) would
 be the same.
 
-\begin{figure}[b]
+\begin{figure}[t]
 \centering
-\includegraphics{Figures/IntroCode2}
+\includegraphics[scale=0.8]{Figures/IntroCode2}
 \caption{Performing the first \cf{send} in T1 asynchronously is not meaning
 preserving with respect to synchronous evaluation.}
 \label{fig:intro2}
@@ -244,14 +244,17 @@ first send on T3, a \emph{new potential matching opportunity} -- the send of
 this asynchronous execution exhibits a new behavior not possible using just
 synchronous operators.
 
+\begin{figure}[t]
+\centering
+\includegraphics[scale=0.8]{Figures/IntroDepGraph}
+\caption{Dependence graph induced by the execution of the program presented in Figure~\ref{fig:intro2}.}
+\label{fig:dep_graph}
+\end{figure}
+
 The distinction between these two executions can be explained in terms of a
 dependence graph that captures both intra- and inter-thread data- and
 control-flow.  We can depict the executions by explicitly drawing these
-dependencies as shown below:
-
-\begin{center}
-\includegraphics{Figures/IntroDepGraph}
-\end{center}
+dependencies as shown in Figure~\ref{fig:dep_graph}.
 
 \noindent The dashed edges reflect communication and synchronization
 dependencies among threads, while solid edges capture thread-local
@@ -378,7 +381,6 @@ message before the subsequent causally ordered message is generated. We can
 build a distributed group chat server using the broadcast channel as shown
 below.
 
-\vfill
 \lstset{numbers=none}
 \begin{lstlisting}
 (* bc is broadcast chan, daemon is spawn as a separate thread *)
@@ -799,7 +801,7 @@ Definition~\ref{def:cml}, $\alpha' \toto \beta$.
 
 \section{Operational Semantics}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{minipage}[t]{\columnwidth}
 \begin{smathpar}
 \begin{array}{lclcl}
@@ -838,7 +840,7 @@ t 						& \in & {\tt ThreadId}\\
 \label{sem:rxcml_op_syntax}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[t]
 \begin{smathpar}
 \begin{array}{cl}
 
@@ -1223,7 +1225,7 @@ necessary for distributed execution.
 
 \subsection {System Architecture}
 
-\begin{figure}
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.5\textwidth]{Figures/CRexDesign}
 \caption{\rxcml application stack.}
@@ -1271,7 +1273,7 @@ send does not block and \emph{speculatively} continues execution.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.65\textwidth]{Figures/CommunicationManager}
+\includegraphics[width=0.55\textwidth]{Figures/CommunicationManager}
 \caption{Communication manager behavior during a send and its matching receive.}
 \label{fig:comm_mgr}
 \end{figure}
@@ -1472,7 +1474,7 @@ small instances to simulate the latencies involved in a real web-application. A
 benchmark run involved 10K transactions, spread equally across all of the
 available clients.
 
-\begin{figure}
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.5\textwidth]{Graphs/oltp_time}
 \caption{Performance comparison on distributed \texttt{vacation} (OLTP)
@@ -1520,7 +1522,7 @@ requiring coordination among all replicas for every broadcast operation
 compromising responsiveness. Our relaxed execution model overcomes this
 inefficiency.
 
-\begin{figure}
+\begin{figure}[t]
 \begin{lstlisting}
 (* lc: client chan, sc: server chan, tc: timeOut chan *)
 fun serverDaemon id rIn lOut =
