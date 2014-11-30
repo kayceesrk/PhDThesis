@@ -865,7 +865,7 @@ all well-formed \quelea contracts. The proof of the theorem is given below:
   \end{array}
   \end{mathpar}
    Since $\eff$ denotes new effect, it is a fresh variable that does
-   not occur free in $\Delta$. From $H3$, after instantiating bound
+   not occur free in $\Delta$. From $H2$, after instantiating bound
    $\cureff$ with $\eff$, we have:
   \begin{mathpar}
   \begin{array}{cr}
@@ -874,7 +874,7 @@ all well-formed \quelea contracts. The proof of the theorem is given below:
   \end{array}
   \end{mathpar}
   Due to the soundness of natural deduction for first-order logic,
-  $H4$ implies that for all models $\mathcal{M}$ such that
+  $H3$ implies that for all models $\mathcal{M}$ such that
   $\mathcal{M} \models \Delta$, if $\mathcal{M} \models
   \cv_\tau[\eff/\cureff]$ then $\mathcal{M} \models
   \cv[\eff/\cureff]$. Since $\E'$ is well-formed, we have:
@@ -883,7 +883,7 @@ all well-formed \quelea contracts. The proof of the theorem is given below:
     \E' \models \Delta & H\npp\\
   \end{array}
   \end{mathpar}
-  Proof follows from $H1$, $H5$, and $H4$.
+  Proof follows from $H1$, $H3$, and $H4$.
   \hfill \qed
 \end{proof}
 
@@ -984,7 +984,7 @@ ctxt = {\ctxtFn}^{*}(\Theta(r)) \qquad
 \sameobjZ' = \EffSoup' \times \EffSoup'
 }
 {
-  \auxred {\Theta} {((\EffSoup,\visZ,\soZ,\sameobjZ), \langle s,i,op \rangle}
+  \auxred {\Theta} {((\EffSoup,\visZ,\soZ,\sameobjZ), \langle s,i,op \rangle)}
   {r} {((\EffSoup',\visZ',\soZ',\sameobjZ'),\eff)}
 }
 \end{array}
