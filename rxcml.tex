@@ -973,21 +973,20 @@ its thread identifier. The calling thread is paused until the joined thread
 moves to the final local state $\doneOp$ (Rule {\sc Join}).
 
 The {\sc Send} rule adds the associated send action $\alpha$ into
-$\ActionSoup$, the collection of pending send actions, and allows
-execution to proceed.  Thus, this rule captures asynchronous behavior.
-The transition defined by the {\sc Recv} has a label defined as a
-pair, consisting of the receive action $\alpha$ and an unmatched send
-action $\beta$, which belongs to the send pool. The receiver thread
-consumes the value contained in the send action, and removes the
-action from $\ActionSoup$.  An observable action (rule {\sc Print}) is
-evaluated only if the trace emits a print action; this rule exists
-primarily to allow us to reason about equivalence of observable
-behaviors as we describe below.  Finally, we define a commit rule
-(rule {\sc Commit}) that checks whether the interleaving generated
-thus far corresponds to a sensible CML execution, i.e., whether the
-interleaving exhibits a behavior that could have been observed if all
-\cf{send} operations executed thus far were evaluated synchronously.
-It uses an operator {\sf WF} defined below.
+$\ActionSoup$, the collection of pending send actions, and allows execution to
+proceed.  Thus, this rule captures asynchronous behavior. The transition
+defined by the {\sc Recv} has a label defined as a pair, consisting of the
+receive action $\alpha$ and an unmatched send action $\beta$, which belongs to
+the send pool. The receiver thread consumes the value contained in the send
+action, and removes the action from $\ActionSoup$.  An observable action (rule
+{\sc Print}) is evaluated only if the trace emits a print action; this rule
+exists primarily to allow us to reason about equivalence of observable
+behaviors as we describe below.  Finally, we define a commit rule (rule {\sc
+Commit}) that checks whether the interleaving generated thus far corresponds to
+a sensible CML execution, i.e., whether the interleaving exhibits a behavior
+that could have been observed if all \cf{send} operations executed thus far
+were evaluated synchronously. It uses an operator {\sf WF} defined in
+definition~\ref{def:well-formed-rel}.
 
 \begin{definition}[$\rel$ execution]
 
@@ -1078,7 +1077,7 @@ operational action $(a,b) \in \ActionClass{op}$ is simply treated as $a \in
 \label{def:well-formed-rel}
 Let $\E_o = (\program,tr) \in \rel(\program)$ be an operational execution. If
 the axiomatic execution $\E_{ax} = \opax(\E_o)$ is well-formed, then $\E_o$ is
-well-formed.
+well-formed. This is written as $\wf{\E_o}$.
 \end{definition}
 
 \begin{theorem}
