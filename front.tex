@@ -141,19 +141,24 @@ these platforms must tackle the full complexity of concurrent programming for
 an asynchronous distributed system.
 
 This dissertation argues that functional programming language abstractions can
-mitigate the complexity of programming weakly consistent systems. It presents
-three major contributions, each focused on addressing a particular challenge
-associated with weakly consistent loosely coupled systems: the absence of cache
-coherence, asynchrony and eventual consistency. First, it describes \MMSCC, a
-parallel extension of MLton Standard ML compiler and runtime for the Intel
-Single-chip cloud computer (SCC), and shows how to provide an efficient cache
-coherent virtual address space on top of a \emph{non cache coherent} multicore
-architecture. Next, it describes \rxcml, a distributed extension of \MM and
-shows that, with the help of speculative execution, synchronous communication
-can be utilized as an efficient abstraction for programming asynchronous
-distributed systems. Finally, it presents the \quelea, a programming system for
-\emph{eventually consistent} distributed stores, and shows that the choice of
-correct consistency level for replicated data type operations and transactions
-can be automated with the help of high-level declarative \emph{contracts}.
+simplify scalable concurrent programming for weakly consistent systems.
+Functional programming espouses mutation-free programming, and rare mutations
+when present are explicit in their types. By controlling and explicitly
+reasoning about shared state mutations, functional programming mitigates the
+complexity of programming weakly consistent systems. Building upon this
+intuition, this dissertation presents three major contributions, each focused
+on addressing a particular challenge associated with weakly consistent loosely
+coupled systems: the absence of cache coherence, asynchrony and eventual
+consistency. First, it describes \MMSCC, a parallel extension of MLton Standard
+ML compiler and runtime for the Intel Single-chip cloud computer (SCC), and
+shows how to provide an efficient cache coherent virtual address space on top
+of a \emph{non cache coherent} multicore architecture. Next, it describes
+\rxcml, a distributed extension of \MM and shows that, with the help of
+speculative execution, synchronous communication can be utilized as an
+efficient abstraction for programming asynchronous distributed systems.
+Finally, it presents the \quelea, a programming system for \emph{eventually
+consistent} distributed stores, and shows that the choice of correct
+consistency level for replicated data type operations and transactions can be
+automated with the help of high-level declarative \emph{contracts}.
 
 \end{abstract}
