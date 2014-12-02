@@ -43,7 +43,7 @@ Besides \cf{sendEvt} and \cf{recvEvt}, there are other base events provided by
 CML\@.  The \cf{never} event, as its name suggests, is never available for
 synchronization; in contrast, \cf{alwaysEvt} is always available for
 synchronization.  These events are typically generated based on the
-(un)satisfiability of conditions or invariants that can be subsequently used to
+satisfiability of conditions or invariants that can be subsequently used to
 influence the behavior of more complex events built from the event combinators
 described below.  Much of CML's expressive power derives from event combinators
 that construct complex event values from other events.  We list some of these
@@ -132,16 +132,16 @@ aSendEvt : 'a chan * 'a -> (unit, unit) AEvent
 aRecvEvt : 'a chan -> (unit, 'a) AEvent
 \end{lstlisting}
 
-An \cf{AEvent} value is parameterized with respect to the type of the event's
-post-creation and post-consumption actions.  In the case of \cf{aSendEvt}, both
-actions yield \cf{unit}: when synchronized on, the event immediately returns a
-\cf{unit} value and places its \cf{'a} argument value on the supplied channel.
-The post-consumption action also yields \cf{unit}. When synchronized on, an
-\cf{aRecvEvt} returns \cf{unit}; the type of its post-consumption action is
-\cf{'a} reflecting the type of value read from the channel when it is paired
-with a send. The semantics of both asynchronous send and receive guarantees
-that successive communication operations performed by the same thread get
-witnessed in the order in which they were issued.
+The type of \cf{AEvent} is polymorphic over the type of the return values of
+the event's post-creation and post-consumption actions.  In the case of
+\cf{aSendEvt}, both actions yield \cf{unit}: when synchronized on, the event
+immediately returns a \cf{unit} value and places its \cf{'a} argument value on
+the supplied channel. The post-consumption action also yields \cf{unit}. When
+synchronized on, an \cf{aRecvEvt} returns \cf{unit}; the type of its
+post-consumption action is \cf{'a} reflecting the type of value read from the
+channel when it is paired with a send. The semantics of both asynchronous send
+and receive guarantees that successive communication operations performed by
+the same thread get witnessed in the order in which they were issued.
 
 Beyond these base events, \acml also provides a number of combinators that
 serve as asynchronous versions of their CML counterparts. These combinators

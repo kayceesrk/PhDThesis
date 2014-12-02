@@ -769,13 +769,13 @@ a cycle involving actions in $\ActionSet_{od}$.
 \end{lemma}
 
 Next, we show that a well-formed axiomatic execution respects the safety
-property of non-speculative execution of a CML program. When a CML program
+property of a CML program executed non-speculatively. When a CML program
 evaluates non-speculatively, a thread performing a communication action is
 blocked until a matching communication action is available. Hence, if
 $(\Exec,\toto) \in \cml(\program)$, and a communication action $\alpha$ on a
 thread $t$ is followed by an action $\beta$ on the same thread, then it must be
-the case that there is a matching action $\alpha \co \alpha'$ that
-happened before $\beta$ in $\toto$. This is captured in the following theorem.
+the case that there is a matching action $\alpha \co \alpha'$ that happened
+before $\beta$ in $\toto$. This is captured in the following theorem.
 
 \begin{theorem}
 Given a CML execution $(\E, \toto) \in \cml(\program)$, $\forall \alpha,\beta$

@@ -517,7 +517,7 @@ originates from outside the current session.
 \includegraphics[width=0.5\textwidth]{Figures/std_reference_count}
 \caption{State transition diagram detailing the behavior of the reference
 counting mechanism with respect to object \cf{x} involved in an assignment,
-\cf{r := x}, where \cf{P}$_\textrm{\cf{r}}$ = \cf{isInCurrentSession(r)}.}
+\textsf{r := x}, where \textsf{P}$_\textrm{r}$ = \textsf{isInCurrentSession(r)}.}
 \label{fig:std_ref_count}
 \end{figure}
 
@@ -1276,7 +1276,7 @@ mutability information is not utilized for cleanliness.
 \subsubsection{Impact of Heap Session}
 \label{sec:impact_session}
 
-\begin{table}
+\begin{table}[t]
 \begin{center}
 \caption{Impact of heap session: \% LM clean represents the fraction of
 instances when a clean object closure has at least one object with

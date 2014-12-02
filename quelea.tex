@@ -1302,8 +1302,8 @@ $\E'$ is well-formed.
 We now define causal consistency property of the store formally:
 
 \begin{definition}
-  A store $\Theta$ is said to be causally consistent under an execution
-  $\E=\Exec$ if and only if:
+	Given an execution $\E=\Exec$, a store $\Theta$ is said to be causally
+	consistent under an execution if and only if:
   \begin{mathpar}
   \begin{array}{cr}
     \hspace*{-0.5in}\forall (r\in{\sf dom}(\Theta)). \forall (\eff \in
@@ -2077,7 +2077,7 @@ The dotted line represents the visibility requested by the contracts.}
 \end{figure}
 
 In order to illustrate the utility of transaction contract classification, we
-identify three well-understood coordination-free transaction semantics -- Read
+identify three popular coordination-free transaction semantics -- Read
 Committed (RC)~\cite{Berenson95}, Monotonic Atomic View (MAV)~\cite{BailisHAT}
 and Repeatable Read (RR)~\cite{Berenson95}, and illustrate the classification
 strategy. Our technique can indeed be applied to a different isolation level
@@ -2186,7 +2186,7 @@ be spawned on demand.
 \subsection{Operation Consistency}
 
 Every effect generated as a result of an effectful operation on an object
-inserts a new row $(o,e,vis,txn,val)$ into the backing store, where $o$ and $e$
+inserts a new row $(o,\allowbreak e,\allowbreak vis,\allowbreak txn,val)$ into the backing store, where $o$ and $e$
 are object and (unique) effect identifiers, $vis$ is the set of identifiers of
 effects visible to this operation, $txn$ is an optional transaction identifier,
 and $val$ is the value associated with the effect (eg: \cf{Withdraw 50}). The
