@@ -697,6 +697,7 @@ the mutator never encounters a reference to a forwarded object. \\
 \subsubsection{Lifting Objects to the Shared Heap}
 
 \begin{figure}[t]
+\renewcommand{\baselinestretch}{1.3}
 \begin{lstlisting}
 Set imSet;
 void liftHelper (pointer* op, pointer* frontierP) {
@@ -706,7 +707,7 @@ void liftHelper (pointer* op, pointer* frontierP) {
   copyObject (o, frontier);
   *op = frontier + headerSize(o);
   *frontierP = frontier + objectSize(o);
-  if (isMutable(o)) { setHeader(o, FORWARDED); *o = *op; }
+  if (isMutable(o)) {setHeader(o, FORWARDED); *o = *op;}
   else imSet += o;
 }
 
@@ -719,7 +720,7 @@ pointer lift (pointer op, bool isLocalMany) {
   setSharedHeapFrontier(frontier);
   //Fix forwarding pointers
   foreachObjptrInObject (getCurrentStack(), fixFwdPtr);
-  foreach o in imSet { foreachObjptrInObject(o, fixFwdPtr); }
+  foreach o in imSet {foreachObjptrInObject(o,fixFwdPtr);}
   frontier = getLocalHeapFrontier();
   if (isLocalMany)
     foreachObjptrInRange(getSessionStart(),&frontier,fixFwdPtr);
