@@ -164,7 +164,7 @@ commentstyle=\itshape\color{MidnightBlue},
 
 
 
-\chapter{\rxcml: A Prescription for Safely Relaxing Synchrony}
+\chapter{RX-CML: A PRESCRIPTION FOR SAFELY RELAXING SYNCHRONY}
 \label{chap:rxcml}
 
 Concurrent ML~\cite{Reppy07} (CML) provides an expressive concurrency mechanism
@@ -446,15 +446,10 @@ nature of the application, participants were placed in three different
 availability zones -- EU West (Ireland), US West (Oregon), and Asia Pacific
 (Tokyo), resp.
 
-During each run, $p_1$ broadcasts a message \cf{X}, followed by $p_2$
-broadcasting \cf{Y}. We consider the run to be successful if the participant
-$p_3$ sees the messages \cf{X},\cf{Y}, in that order.  The experiment was
-repeated for 1K iterations. We record the time between protocol initiation and
-the time at which each participant gets the message \cf{Y}. We consider the
-largest of the times across the participants to be the running time. The
-results are presented below.
-
+\begin{table}[t]
 \begin{center}
+\caption{Performance comparison of causal messaging passing}
+\label{tab:cau_msg}
 \begin{tabular}{ | l | r | r |}
 	\hline
 	\emph{Execution} 					& \emph{Avg.time (ms)} & \emph{Errors} \\
@@ -465,6 +460,15 @@ results are presented below.
   \hline
 \end{tabular}
 \end{center}
+\end{table}
+
+During each run, $p_1$ broadcasts a message \cf{X}, followed by $p_2$
+broadcasting \cf{Y}. We consider the run to be successful if the participant
+$p_3$ sees the messages \cf{X},\cf{Y}, in that order.  The experiment was
+repeated for 1K iterations. We record the time between protocol initiation and
+the time at which each participant gets the message \cf{Y}. We consider the
+largest of the times across the participants to be the running time. The
+results are presented in Table~\ref{tab:cau_msg}.
 
 The \emph{Unsafe Async} row describes the variant where both value and
 acknowledgment distribution is performed asynchronously; it is three times as
