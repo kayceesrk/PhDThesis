@@ -236,4 +236,10 @@ commentstyle=\itshape\color{MidnightBlue},
 \end{align}\end{nop}\ignorespacesafterend}
 \newcommand{\mfbox}[1]{\fbox{${#1}$}}
 
+\newcommand{\singlespace}{\renewcommand{\baselinestretch}{1.0}}
 
+\let\savedCaption=\caption
+\renewcommand*{\caption}[2][\shortcaption]{%
+	\def\shortcaption{#2}
+	\singlespace
+	\savedCaption[#1]{#2}}
