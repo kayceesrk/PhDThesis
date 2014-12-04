@@ -338,7 +338,8 @@ datatype 'a bchan = BCHAN of ('a chan list (*val*) *
 
 (* Create a new broadcast channel *)
 fun newBChan (n: int) (* n = number of participants *) =
-  BCHAN(tabulate(n,fn _ => channel()), tabulate(n,fn _ => channel()))
+  BCHAN(tabulate(n,fn _ => channel()),
+			  tabulate(n,fn _ => channel()))
 
 (* Broadcast send operation *)
 fun bsend (BCHAN (vcList, acList), v: 'a, id: int) : unit =
@@ -379,11 +380,11 @@ members have also received the message. This achieves the desired causal
 ordering between broadcast messages since every member would have received a
 message before the subsequent causally ordered message is generated. We can
 build a distributed group chat server using the broadcast channel as shown
-below.
+below. \vfill
 
 \lstset{numbers=none}
 \begin{lstlisting}
-(* bc is broadcast chan, daemon is spawn as a separate thread *)
+(* bc is broadcast chan, daemon spawn as a separate thread *)
 fun daemon id = display (brecv (bc, id)); daemon id
 fun newMessage (m, id) = display m; bsend (bc, m, id)
 \end{lstlisting}
@@ -447,9 +448,9 @@ availability zones -- EU West (Ireland), US West (Oregon), and Asia Pacific
 (Tokyo), resp.
 
 \begin{table}[t]
-\begin{center}
 \caption{Performance comparison of causal messaging passing}
 \label{tab:cau_msg}
+\begin{center}
 \begin{tabular}{ | l | r | r |}
 	\hline
 	\emph{Execution} 					& \emph{Avg.time (ms)} & \emph{Errors} \\
@@ -1230,7 +1231,7 @@ necessary for distributed execution.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.5\textwidth]{Figures/CRexDesign}
+\includegraphics[width=0.7\textwidth]{Figures/CRexDesign}
 \caption{\rxcml application stack.}
 \label{fig:c-rex}
 \end{figure}
@@ -1415,6 +1416,7 @@ execute optimistically, identifying and remediating conflicting transactions
 ill-formed execution. We implement each lock server as a single CML thread,
 whose kernel is:
 
+\vspace{3mm}
 \lstset{numbers=none}
 \begin{lstlisting}
 fun lockServer (lockChan: unit chan) (unlockChan: unit chan) =

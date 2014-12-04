@@ -235,13 +235,3 @@ commentstyle=\itshape\color{MidnightBlue},
 \par\noindent\begin{nop}\footnotesize\begin{align*}}{
 \end{align}\end{nop}\ignorespacesafterend}
 \newcommand{\mfbox}[1]{\fbox{${#1}$}}
-
-\if{0}
-\newcommand{\singlespace}{\renewcommand{\baselinestretch}{1.0}}
-
-\let\savedCaption=\caption
-\renewcommand*{\caption}[2][\shortcaption]{%
-	\def\shortcaption{#2}
-	\singlespace
-	\savedCaption[#1]{#2}}
-\fi

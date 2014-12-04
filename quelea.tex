@@ -259,7 +259,7 @@ work and conclusions.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.5\columnwidth]{Figures/SystemModel}
+\includegraphics[width=0.7\columnwidth]{Figures/SystemModel}
 \caption{\quelea system model.}
 \label{fig:sysmod}
 \end{figure}
@@ -342,6 +342,7 @@ Let us assume that the bank account object provides three operations:
 withdraw fails if the account has insufficient balance. Every operation in
 \quelea is of the following type, written in Haskell syntax:
 
+\vspace{4mm}
 \begin{codehaskell}
 type Operation e a r = [e] -> a -> (r, Maybe e)
 \end{codehaskell}
@@ -1198,8 +1199,8 @@ contracts.
 First, we prove a useful lemma:
 
 \begin{lemma}[Auxiliary Reduction Preserves Well-Formedness]
-\label{lem:auxred-wf}
-For every well-formed execution state $\E$, if
+\label{lem:auxred-wf} \hfill
+For every execution state $\E$ that is well-formed, if
 $\auxred{\Theta}{(\E,\langle s,i,op \rangle)} {r} {(\E',\eff)}$, then
 $\E'$ is well-formed.
 \end{lemma}
@@ -1999,8 +2000,7 @@ returns the sum of the balances of individual accounts. Our goal is to ensure
 that \cf{totalBalance} returns the result obtained from a consistent snapshot
 of the object states. The \quelea code for the transactions is given below:
 
-\hspace{1em}
-\begin{minipage}[t]{0.4\columnwidth}
+\begin{minipage}[t]{0.48\columnwidth}
 \begin{codehaskell}
 save amt =
   x <- dollar(classify $\cv_{sv}$)
@@ -2010,7 +2010,7 @@ save amt =
 \end{codehaskell}
 \end{minipage}
 \hfill
-\begin{minipage}[t]{0.4\columnwidth}
+\begin{minipage}[t]{0.48\columnwidth}
 \begin{codehaskell}
 totalBalance =
   x <- dollar(classify $\cv_{tb}$)
@@ -2268,6 +2268,7 @@ Since the semantics of summarization depends on the semantics of the data type,
 we expect the programmer to provide a summarization function for each RDT with
 the following type:
 
+\vspace{3mm}
 \begin{codehaskell}
 summarize :: [e] -> [e]
 \end{codehaskell}

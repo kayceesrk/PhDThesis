@@ -158,7 +158,7 @@ global synchronization for every collection.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.8\textwidth]{Figures/LocalCollector.pdf}
+\includegraphics[width=0.9\textwidth]{Figures/LocalCollector.pdf}
 \caption{Local collector heap organization for the SCC}
 \label{fig:lc}
 \end{figure}
@@ -697,7 +697,7 @@ the mutator never encounters a reference to a forwarded object. \\
 \subsubsection{Lifting Objects to the Shared Heap}
 
 \begin{figure}[t]
-\renewcommand{\baselinestretch}{1.3}
+\renewcommand{\baselinestretch}{1.38}
 \begin{lstlisting}
 Set imSet;
 void liftHelper (pointer* op, pointer* frontierP) {
@@ -720,10 +720,12 @@ pointer lift (pointer op, bool isLocalMany) {
   setSharedHeapFrontier(frontier);
   //Fix forwarding pointers
   foreachObjptrInObject (getCurrentStack(), fixFwdPtr);
-  foreach o in imSet {foreachObjptrInObject(o,fixFwdPtr);}
+  foreach o in imSet
+		foreachObjptrInObject(o,fixFwdPtr);
   frontier = getLocalHeapFrontier();
   if (isLocalMany)
-    foreachObjptrInRange(getSessionStart(),&frontier,fixFwdPtr);
+    foreachObjptrInRange
+			(getSessionStart(), &frontier, fixFwdPtr);
   setSessionStart(frontier);
   return op;
 }
@@ -751,19 +753,19 @@ immutable objects are copied and their location added to \cf{imSet} (Lines
 shared heap frontier is updated to the new location.
 
 After object lifting, the current stack is walked to fix any references to
-forwarding pointers (Line 22). Since we do not track references from the stack
+forwarding pointers (Line 21). Since we do not track references from the stack
 for reference counting, there might be references to forwarded objects from
 stacks other than the current stack. We fix such references lazily. Before a
 context switch, the target stack is walked to fix any references to forwarded
 objects. Since immutable objects are copied and mutable objects lifted, a
 copied immutable object might point to a forwarded object. We walk all the
 shared heap copies of immutable objects lifted from the local heap to fix any
-references to forwarded objects (Lines 22).
+references to forwarded objects (Lines 22--23).
 
 Recall that if the object closure was clean, but has \cf{LOCAL\_MANY}
 references, then it has at least one pointer from the current session. Hence,
 in this case, we walk the current session to fix the references to any
-forwarded objects to point to their shared heap counterparts (lines 24--25).
+forwarded objects to point to their shared heap counterparts (lines 25--27).
 Finally, session start is moved to the current frontier.
 
 \subsubsection{Remote Spawns}
@@ -834,7 +836,7 @@ information.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.8\textwidth]{Figures/SMC_Collector.pdf}
+\includegraphics[width=0.9\textwidth]{Figures/SMC_Collector.pdf}
 \caption{Heap design utilizing SCC's software-managed cache coherence capability.}
 \label{fig:smc}
 \end{figure}
@@ -897,10 +899,10 @@ pointer readBarrier (pointer p) {
 \end{figure}
 
 \begin{figure}[t]
-\vspace{10mm}
 \begin{lstlisting}
 val writeBarrier (Ref r, Val v) {
-  if (isObjptr(v) && isInSharedHeap(r) && isInLocalHeap(v)) {
+  if (isObjptr(v) && isInSharedHeap(r)
+			&& isInLocalHeap(v)) {
 			/* Move transitive object closure to shared
 			 * heap, and install forwarding pointers */
 			v = globalize (v);
@@ -929,7 +931,7 @@ perform cache invalidation while reading an address that is less than
 
 Similarly, whenever an object is globalized to the CSH, we must ensure that the
 updates are visible to all of the cores. After an globalizing write, we invoke
-\texttt{smcRelease()}, to flush any outstanding writes to the memory (Line 7 in
+\texttt{smcRelease()}, to flush any outstanding writes to the memory (Line 8 in
 Figure~\ref{code:write_barrier_smc}).
 
 \subsection{Mapping Channel Communication over Message-Passing Buffers}
