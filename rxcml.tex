@@ -1545,8 +1545,7 @@ let
   val localComm =
 		wrap (recvEvt tc, fn () =>
 			let
-				val lOps = sync
-				  	(choose (recvEvt lc, alwaysEvt []))
+				val lOps = sync (choose (recvEvt lc, alwaysEvt []))
 				val (_, rIn') = xform (lOps, rIn)
 				val _ = updateDocument(rIn')
 			in serverDaemon id [] (lOut @ lOps)
@@ -1573,16 +1572,15 @@ over the channel \cf{rc}.  \cf{rIn} represents the list of incoming remote
 operations that have not yet been merged with the local document replica.
 \cf{lOut} represents the list of local operations yet to be broadcast.
 
-At every iteration of the server daemon loop, there is a choice (line 26) between
-performing (a) a local receive (\cf{localComm}), (b) a remote send
-(\cf{remoteSend}), or (c) a remote receive (\cf{remoteRecv}) (line 29). We
-have extended the implementation of broadcast primitives presented in
-Figure~\ref{code:bchan} with events that encapsulate broadcast send and
-receive. Remote sends are only enabled if \cf{lOut} is not empty. Otherwise,
-it is a \cf{neverEvt()} which will never be picked in a choice. If
-\cf{lOut} is not empty, then the outstanding messages are transformed
-against the remote messages and sent to all other daemons using causal atomic
-broadcast (lines 11-13).
+At every iteration of the server daemon loop, there is a choice (line 25)
+between performing (a) a local receive (\cf{localComm}), (b) a remote send
+(\cf{remoteSend}), or (c) a remote receive (\cf{remoteRecv}). We have extended
+the implementation of broadcast primitives presented in Figure~\ref{code:bchan}
+with events that encapsulate broadcast send and receive. Remote sends are only
+enabled if \cf{lOut} is not empty. Otherwise, it is a \cf{neverEvt()} which
+will never be picked in a choice. If \cf{lOut} is not empty, then the
+outstanding messages are transformed against the remote messages and sent to
+all other daemons using causal atomic broadcast (lines 11-13).
 
 By receiving broadcasted messages on the same thread as the one that performs
 the broadcast, we ensure a total order on message reception at every client.
@@ -1594,19 +1592,19 @@ to be applied to the local replica (lines 5-6).
 The user-interface thread sends the updates to the server daemon on the \cf{lc}
 channel, making them available to other replicas. This communication is also
 made asynchronous through speculation, so that the UI stays responsive to the
-author. The daemon uses a \cf{timeoutManager} (lines 29-31) to periodically
+author. The daemon uses a \cf{timeoutManager} (lines 28-30) to periodically
 fetch updates from the user interface thread. The daemon then receives local
-updates \cf{lOps}, if any, from the channel \cf{lc} (lines 19-20).
+updates \cf{lOps}, if any, from the channel \cf{lc} (lines 19).
 
 Causal atomic broadcast for inter-daemon communication ensures that operations
 in \cf{rIn} at every daemon appear in the same order. In other words, every
 daemon is in the same abstract state. Hence, we can simply transform the
 unapplied remote operations \cf{rIn} with respect to local operations
-\cf{lOps}, to yield an \cf{rIn'} (line 21) that considers the remote updates in
+\cf{lOps}, to yield an \cf{rIn'} (line 20) that considers the remote updates in
 the context of local ones.  The daemon then updates the document with the
 remote operations, by applying further transformation to account for additional
 local updates that might have occurred between the time the user-interface sent
-a message to it and now (line 22). This operation might perform a
+a message to it and now (line 21). This operation might perform a
 well-formedness check to check for consistency as updating the document is an
 effectful operation. This commit prevents speculation from leaking to the user.
 
