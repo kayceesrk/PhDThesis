@@ -378,11 +378,11 @@ time. Our experiments reveal that, on average, the mutator spends 15.3\% of the
 time executing read barriers for our benchmarks.
 
 \begin{table}[t]
-\begin{center}
 \caption{Effectiveness of read barrier checks: RB invocations represents the
 average number of read barrier invocations and forwarded represents the average
 number of instances when the read barrier encountered a forwarded object.}
 \label{tab:rb_utility}
+\begin{center}
 \begin{tabular} {|l|r|r|}
 \hline
 {\bf Benchmark} & {\bf RB invocations ($\times 10^6$)} & {\bf Forwarded}\\
@@ -1054,10 +1054,10 @@ inputs.
 \end{itemize}
 
 \begin{table}[t]
-\begin{center}
 \caption{Benchmark characteristics. \%Sh represents the average fraction of
 bytes allocated in the shared heap.}
 \label{tab:bench_char}
+\begin{center}
 \begin{tabular} {|l|r|r|r|r|}
 \hline
 \multirow{2}{*}{{\bf Benchmark}} & {\bf Allocation Rate} 	& \multicolumn{2}{|c|}{{\bf Allocation}} & \multirow{2}{*}{\bf \# Threads} \\
@@ -1160,9 +1160,9 @@ in a thread preemption and stall. The results presented here were taken with
 programs running on 48-cores.
 
 \begin{table}[t]
-\begin{center}
 \caption{Average number of preemptions on write barrier.}
 \label{tab:preempt}
+\begin{center}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
@@ -1196,10 +1196,10 @@ stalled threads. Hence, an increase in the number of preemptions leads to an
 increase in the number of local collections.
 
 \begin{table}[t]
-\begin{center}
 \caption{Average percentage of forced GCs out of the total number of local
 major GCs.}
 \label{tab:forcedGCs}
+\begin{center}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \prc} & {\bf \prc MU-} & {\bf \prc CL-} \\
@@ -1278,11 +1278,11 @@ mutability information is not utilized for cleanliness.
 \label{sec:impact_session}
 
 \begin{table}[t]
-\begin{center}
 \caption{Impact of heap session: \% LM clean represents the fraction of
 instances when a clean object closure has at least one object with
 \cf{LOCAL\_MANY} references.}
 \label{tab:session-impact}
+\begin{center}
 \begin{tabular} {|l|r|r|r|}
 \hline
 {\bf Benchmark} & {\bf \% LM Clean} & {\bf Avg. Session Size (Bytes)} \\
