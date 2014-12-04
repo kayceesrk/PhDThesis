@@ -896,6 +896,7 @@ pointer readBarrier (pointer p) {
 \end{figure}
 
 \begin{figure}[t]
+\vspace{10mm}
 \begin{lstlisting}
 val writeBarrier (Ref r, Val v) {
   if (isObjptr(v) && isInSharedHeap(r) && isInLocalHeap(v)) {
